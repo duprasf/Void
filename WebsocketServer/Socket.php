@@ -14,12 +14,12 @@ use \Void\Exception\Websocket as Exception;
 class Socket
 {
     /**
-     * @var Socket Holds the master socket
-     */
+    * @var Socket Holds the master socket
+    */
     protected $master;
     /**
-     * @var array Holds all connected sockets
-     */
+    * @var array Holds all connected sockets
+    */
     protected $allsockets = array();
 
     protected $context = null;
@@ -57,24 +57,22 @@ class Socket
     }
 
     /**
-     * Create a socket on given host/port
-     *
-     * @param string $host The host/bind address to use
-     * @param int $port The actual port to bind on
-     */
+    * Create a socket on given host/port
+    *
+    * @param string $host The host/bind address to use
+    * @param int $port The actual port to bind on
+    */
     private function createSocket($host, $port)
     {
         $protocol = ($this->ssl === true) ? 'tls://' : 'tcp://';
         $url = $protocol.$host.':'.$port;
         $this->context = stream_context_create();
-        if($this->ssl === true)
-        {
+        if($this->ssl === true) {
             $this->applySecureContext();
         }
 
         $errno = $err = null;
-        if(!$this->master = stream_socket_server($url, $errno, $err, STREAM_SERVER_BIND|STREAM_SERVER_LISTEN, $this->context))
-        {
+        if(!$this->master = stream_socket_server($url, $errno, $err, STREAM_SERVER_BIND|STREAM_SERVER_LISTEN, $this->context)) {
             throw new Exception('Error creating socket: ' . $err);
         }
 
@@ -130,8 +128,7 @@ class Socket
             $certData = array('file'=>$certData);
         }
 
-        if(!file_exists($certData['file']))
-        {
+        if(!file_exists($certData['file'])) {
             throw new Exception('Certificate file does not exists');
         }
 
@@ -153,30 +150,24 @@ class Socket
     // method originally found in phpws project:
     protected function readBuffer($resource)
     {
-        if($this->ssl === true)
-        {
+        if($this->ssl === true) {
             $buffer = fread($resource, 8192);
             // extremely strange chrome behavior: first frame with ssl only contains 1 byte?!
-            if(strlen($buffer) === 1)
-            {
+            if(strlen($buffer) === 1) {
                 $buffer .= fread($resource, 8192);
             }
             return $buffer;
         }
-        else
-        {
+        else {
             $buffer = '';
             $buffsize = 8192;
             $metadata['unread_bytes'] = 0;
-            do
-            {
-                if(feof($resource))
-                {
+            do {
+                if(feof($resource)) {
                     return false;
                 }
                 $result = fread($resource, $buffsize);
-                if($result === false || feof($resource))
-                {
+                if($result === false || feof($resource)) {
                     return false;
                 }
                 $buffer .= $result;
@@ -192,15 +183,12 @@ class Socket
     public function writeBuffer($resource, $string)
     {
         $stringLength = strlen($string);
-        for($written = 0; $written < $stringLength; $written += $fwrite)
-        {
+        for($written = 0; $written < $stringLength; $written += $fwrite) {
             $fwrite = @fwrite($resource, substr($string, $written));
-            if($fwrite === false)
-            {
+            if($fwrite === false) {
                 return false;
             }
-            elseif($fwrite === 0)
-            {
+            elseif($fwrite === 0) {
                 return false;
             }
         }

@@ -124,4 +124,3 @@ class Crypt
         return $this;
     }
 }
-

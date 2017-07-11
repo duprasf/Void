@@ -23,17 +23,17 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
     // PHP 5.3 doesn't have traits so I have to copy/paste it manually
     //use \Psr\Log\LoggerAwareTrait;
     /**
-     * The logger instance.
-     *
-     * @var LoggerInterface
-     */
+    * The logger instance.
+    *
+    * @var LoggerInterface
+    */
     protected $logger;
 
     /**
-     * Sets a logger.
-     *
-     * @param LoggerInterface $logger
-     */
+    * Sets a logger.
+    *
+    * @param LoggerInterface $logger
+    */
     public function setLogger(LoggerInterface $logger)
     {
         $this->logger = $logger;
@@ -168,7 +168,7 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
                                         'client'=>$client,
                                         'maxClients'=>$this->maxClients,
                                     ),
-                                ), 'warning');
+                                    ), 'warning');
 
                                 $client->onDisconnect();
 
@@ -186,7 +186,7 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
                                         'client'=>$client,
                                         'maxConnectionsPerIp'=>$this->maxConnectionsPerIp,
                                     ),
-                                ), 'warning');
+                                    ), 'warning');
                                 continue;
                             }
                         }
@@ -201,7 +201,7 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
                                 'message'=>'Unknown connection... client does not exists',
                                 'params'=>array(
                                 ),
-                            ), 'error');
+                                ), 'error');
                             if(isset($this->clients[(int)$socket])) {
                                 unset($this->clients[(int)$socket]);
                             }

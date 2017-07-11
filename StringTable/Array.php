@@ -1,11 +1,7 @@
 <?php
-namespace Void;
+namespace Void\StringTable;
 
-class StringTableArray extends StringTable implements \ArrayAccess {
-    static protected function getNewObject($file) {
-        return new StringTableArray($file);
-    }
-
+class Array2 implements \ArrayAccess {
     public function replaceFile($file) {
         if(file_exists($file)) {
             $this->__str = include($file);
@@ -36,6 +32,10 @@ class StringTableArray extends StringTable implements \ArrayAccess {
         return $this;
     }
 
+    public function __invoke($var, $options=null) {
+        return $this->getStr($var, $options);
+    }
+
     public function getStr($var, $options=null){
         if(is_string($options))
             $options = array("section"=>$options);
@@ -55,36 +55,21 @@ class StringTableArray extends StringTable implements \ArrayAccess {
             "internal"=>false,
             "autoEncode"=>$this->autoEncode,
             "utf8Decode"=>$this->utf8Decode,
-            "returnFalseWhenNotFound"=>false,
         );
-
         $options = array_intersect_key($options, $defaultOptions)+$defaultOptions;
 
-        $return = self::NOT_FOUND_STRING.' '.$options["section"]."/".$var;
-        if(isset($this->__str[$options["section"]][$var][$options["lang"]])) {
-            $return = $this->__str[$options["section"]][$var][$options["lang"]];
-        }
-        elseif(isset($this->__str[$options["section"]][$var][$this->defaultLang])) {
-            $return = $this->__str[$options["section"]][$var][$this->defaultLang];
-        }
-        elseif(isset($this->__str["common"][$var][$options["lang"]])) {
-            $return = $this->__str["common"][$var][$options["lang"]];
-        }
-        elseif(isset($this->__str["common"][$var][$this->defaultLang])) {
-            $return = $this->__str["common"][$var][$this->defaultLang];
-        }
-        elseif(isset($this->__str[$var])) $return = $this->getSection($var, $options);
-
-        if(is_string($return)){
-            if($options["autoEncode"]) {
+        $return = "";
+        if(isset($this->__str[$options["section"]][$var])) {
+            $return = $this->__str[$options["section"]][$var];
+            if($autoEncode) {
                 $return = htmlentities($return, ENT_QUOTES, 'UTF-8', false);
             }
-            if($options["utf8Decode"]) {
+            if($utf8Decode) {
                 $return = utf8_decode($return);
             }
         }
-        if(isset($options['returnFalseWhenNotFound']) && $options['returnFalseWhenNotFound'] && strpos($return, self::NOT_FOUND_STRING) === 0) {
-            $return = false;
+        else if(isset($this->__str[$var])) {
+            $return = $this->getSection($var);
         }
 
         return $return;
@@ -105,6 +90,7 @@ class StringTableArray extends StringTable implements \ArrayAccess {
             "autoEncode"=>$this->autoEncode,
         );
         $options = array_merge(array_intersect_key($options, $defaultOptions), array_diff_key($defaultOptions, $options));
+
         $value = array();
         foreach($this->__str[$options["section"]] as $var=>$string) {
             $value[$var] = $string[$options["lang"]];
