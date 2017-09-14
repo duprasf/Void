@@ -69,7 +69,7 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
     protected $forceCheckOrigin = true;
     protected $allowedOrigins = array();
     protected $maxClients = 100;
-    protected $maxConnectionsPerIp = 5;
+    protected $maxConnectionsPerIp = 50;
     protected $maxRequestsPerMinute = 70;
 
     const STATUS_SERVER_CREATED = 1;
@@ -161,14 +161,16 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
                                 // this event can be used to send a message to the client
                                 $this->trigger('clientLimitReached', $this, compact('client'));
 
-                                $this->status(array(
-                                    'code'=>self::STATUS_LIMIT_REACHED,
-                                    'message'=>'Client Limit Reached ('.$this->maxClients.')!',
-                                    'params'=>array(
-                                        'client'=>$client,
-                                        'maxClients'=>$this->maxClients,
-                                    ),
-                                    ), 'warning');
+                                $this->status(
+                                    array(
+                                        'code'=>self::STATUS_LIMIT_REACHED,
+                                        'message'=>'Client Limit Reached ('.$this->maxClients.')!',
+                                        'params'=>array(
+                                            'client'=>$client,
+                                            'maxClients'=>$this->maxClients,
+                                        ),
+                                    ), 'warning'
+                                );
 
                                 $client->onDisconnect();
 
@@ -179,14 +181,16 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
                             if($this->checkMaxConnectionsPerIp($client->getClientIp()) === false)
                             {
                                 $client->onDisconnect();
-                                $this->status(array(
-                                    'code'=>self::STATUS_LIMIT_REACHED_IP,
-                                    'message'=>'Connection/Ip limit for ip ' . $client->getClientIp() . ' was reached ('.$this->maxConnectionsPerIp.')!',
-                                    'params'=>array(
-                                        'client'=>$client,
-                                        'maxConnectionsPerIp'=>$this->maxConnectionsPerIp,
-                                    ),
-                                    ), 'warning');
+                                $this->status(
+                                    array(
+                                        'code'=>self::STATUS_LIMIT_REACHED_IP,
+                                        'message'=>'Connection limit for ip ' . $client->getClientIp() . ' was reached ('.$this->maxConnectionsPerIp.')!',
+                                        'params'=>array(
+                                            'client'=>$client,
+                                            'maxConnectionsPerIp'=>$this->maxConnectionsPerIp,
+                                        ),
+                                    ), 'warning'
+                                );
                                 continue;
                             }
                         }
