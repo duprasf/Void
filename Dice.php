@@ -69,7 +69,7 @@ class Dice {
         if(is_string($max) && $max != intval($max)) $max = self::roll($max);
         if(is_numeric($min) && is_numeric($max)) {
             if($max < $min) {$max = $min; $min = 1;}
-            return mt_rand($min, $max);
+            return random_int($min, $max);
         }
         return false;
     }
@@ -98,7 +98,7 @@ class Dice {
             for($i = 1; $i <= $matches[1]; $i++) {
                 $failsafe = 0;
                 do {
-                    $val = mt_rand(1, $matches[2]);
+                    $val = random_int(1, $matches[2]);
                 } while($val == 1 && $reroll1 && $failsafe++ < 10000);
                 $rollDesc[] = array('value'=>$val, 'reroll1'=>$failsafe);
                 $rolls[]=$val;
