@@ -11,13 +11,19 @@ class Db
 {
 	const DATE_FORMAT = "Y-m-d";
 	const DATE_TIME_FORMAT = "Y-m-d H:i:s";
-	
+
 	static private $_savedConnections = array();
 	static private $_defaultConnection = array();
 	static private $requiredConnectionStringElement = array("connectionString"=>1, "username"=>1, "password"=>1);
 
     static private $allQueries = array();
     static private $lastQuery = "";
+
+    static public function buildPreparedToFullQuery($query, array $executeData, \PDO $pdo)
+    {
+        $executeData = array_map(function($v) use($pdo) { return $pdo->quote($v); }, $executeData);
+        return str_replace(array_keys($executeData), $executeData, $query);
+    }
 
 	/**
 	* Get a PDO connection to a database
@@ -27,7 +33,7 @@ class Db
 	* @param bool $saveAsDefault save as the default connection when no param is set to this function
 	* @return PDO
 	*/
-	static public function get($connectionDetailsParam = array(), $saveName= null, $saveAsDefault = false) 
+	static public function get($connectionDetailsParam = array(), $saveName= null, $saveAsDefault = false)
     {
 		if(is_string($connectionDetailsParam)) {
 			if(isset(self::$_savedConnections[$connectionDetailsParam])) $connectionDetails = self::$_savedConnections[$connectionDetailsParam];
@@ -37,7 +43,7 @@ class Db
 			if(count(self::$_defaultConnection) >= 3) $connectionDetails = self::$_defaultConnection;
 			else throw new Exception\Db("No default saved connection found");
 		}
-		
+
 		if(count($connectionDetailsParam) > 0) {
 			$connectionDetails = static::set($connectionDetailsParam, $saveName, $saveAsDefault);
 		}
@@ -45,10 +51,10 @@ class Db
 		if(count(array_intersect_key($connectionDetails, self::$requiredConnectionStringElement)) != 3) {
 			throw new Exception\Db("Connection string does not contains required elements");
 		}
-		
+
 		$pdo = new \PDO($connectionDetails["connectionString"], $connectionDetails["username"], $connectionDetails["password"]);
 		$pdo->exec('SET CHARACTER SET utf8');
-		
+
 		return $pdo;
 	}
 
@@ -60,7 +66,7 @@ class Db
 	* @param bool $saveAsDefault save as the default connection when no param is set to this function
 	* @return returns the connection string just saved
 	*/
-	static public function set(array $connectionDetails, $saveName, $saveAsDefault = null) 
+	static public function set(array $connectionDetails, $saveName, $saveAsDefault = null)
     {
 		if(!isset($connectionDetails["connectionString"])) {
 			if(isset($connectionDetails["conStr"])) $connectionDetails["connectionString"] = $connectionDetails["conStr"];
@@ -94,7 +100,7 @@ class Db
 
 	/**
 	* Combined a implode and a quote for each elements
-	* 
+	*
 	* @param string $glue same as glue for implode
 	* @param array $array array to be quoted and imploded
 	* @param \PDO $db the PDO element from which to quote the elements
@@ -106,10 +112,10 @@ class Db
         if(!is_string($glue)) { $glue=''; }
         return implode($glue, array_map(array($db, 'quote'), $array));
 	}
-    
+
     /**
-    * Build and execute a INSERT or UPDATE query with the table name, ID key value and 
-    * 
+    * Build and execute a INSERT or UPDATE query with the table name, ID key value and
+    *
     * @param PDO $pdo
     * @param array $options array that contains tablename, id, data(array), idName(if different than tablenameId), returnRow(bool), returnId(bool) and/or updateOnly(bool)
     * @return mixed
@@ -131,7 +137,7 @@ class Db
             case "mssql": $now = "GETDATE()"; $separator = array('before'=>'[', 'after'=>']'); break;
             default: $now = date("Y/m/d H:i:s"); break;
         }
-        
+
         $tablename=isset($options["tableName"])?$options["tableName"]:(isset($options["tablename"])?$options["tablename"]:"");
         $id=isset($options["id"])?$options["id"]:"";
         $arg_array=isset($options["data"]) && is_array($options["data"])?$options["data"]:array();
@@ -140,18 +146,18 @@ class Db
         $returnId=isset($options["returnId"])?($options["returnId"]?true:false):false;
         $updateOnly=isset($options["updateOnly"])?($options["updateOnly"]?true:false):false;
 
-        if(preg_match('!'.$separator['before']."|".$separator['after'].'!i', $tablename)) 
+        if(preg_match('!'.$separator['before']."|".$separator['after'].'!i', $tablename))
             throw new Void_Exception_Databroker('Table name is not safe', Void_Exception_Databroker::INFO_NOT_SAFE);
-        if($tablename == "") 
+        if($tablename == "")
             throw new Void_Exception_Databroker('No table specified for save action', Void_Exception_Databroker::TABLENAME_NOT_SET);
         if(is_array($id) && $idName != '') {
             throw new Void_Exception_Databroker('idName should not be used when id is an array for a combined primary key request', Void_Exception_Databroker::IDNAME_SHOULD_NOT_BE_SET);
         }
         if($idName == "") $idName = $tablename."Id";
-        
+
         if(count($arg_array) == 0) return true;
 
-        
+
         $values = array();
         $queryParam = array();
         $queryFields = array();
@@ -164,14 +170,14 @@ class Db
 //            $values[":{$key}"] = ($val === null)?"NULL":$this->db->quote($val);
         }
         $newRequest = false;
-        
+
         if(!self::entryExists($pdo, $tablename, $id, $idName)) {
             if($updateOnly == true) {
                 throw new Void_Exception_Databroker('Row not found for update only', Void_Exception_Databroker::ROW_NOT_FOUND_FOR_UPDATE_ONLY);
             }
             // this is a new request (insert into) if the id is not specified OR if the row does not exist
             $newRequest = true;
-            
+
             $query = "INSERT INTO {$tablename} ( ";
             $query.= implode(', ', $queryFields);
             $query.= ") VALUES (";
@@ -207,7 +213,7 @@ class Db
             if(!$id) {
                 $id = $pdo->lastInsertId();
             }
-                        
+
             if($returnRow) {
                 $query = "SELECT * FROM {$separator['before']}{$tablename}{$separator['after']} WHERE ";
                 if(is_array($id)) {
@@ -236,8 +242,8 @@ class Db
         }
         return true;
     }
-    
-    static public function entryExists($pdo, $tablename, $id, $idName) 
+
+    static public function entryExists($pdo, $tablename, $id, $idName)
     {
         if(is_null($id) || $id == "") return false;
         if($pdo instanceOf \PDO) {
