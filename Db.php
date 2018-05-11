@@ -19,6 +19,19 @@ class Db
     static private $allQueries = array();
     static private $lastQuery = "";
 
+    static public function buildPreparedToFullQuery($query, array $executeData, \PDO $pdo)
+    {
+        $executeData = array_map(function($v) use($pdo) { return $pdo->quote($v); }, $executeData);
+        
+        reset($executeData);
+        if(preg_match('(\b:\w+\b)', $query)) {
+            return strtr($query, $executeData);
+        }
+        else {
+            return preg_replace(array_fill(0, count($executeData), '(\?)'), $executeData, $query, 1);
+        }
+    }
+
 	/**
 	* Get a PDO connection to a database
 	*
