@@ -22,7 +22,7 @@ class Db
     static public function buildPreparedToFullQuery($query, array $executeData, \PDO $pdo)
     {
         $executeData = array_map(function($v) use($pdo) { return $pdo->quote($v); }, $executeData);
-        if(preg_match('(\b:\w+\b)', $query)) {
+        if(preg_match('((?:\b|=|\s):\w+\b)', $query)) {
             return strtr($query, $executeData);
         }
         else {
@@ -114,7 +114,10 @@ class Db
 	static public function implodeQuote($glue, array $array, \PDO $db=null)
 	{
         if(!$db instanceof \PDO) $db = \Void\Db::get();
-        if(!is_string($glue)) { $glue=''; }
+        if(!is_string($glue)) {
+            $glue='';
+        }
+
         return implode($glue, array_map(array($db, 'quote'), $array));
 	}
 
@@ -151,16 +154,22 @@ class Db
         $returnId=isset($options["returnId"])?($options["returnId"]?true:false):false;
         $updateOnly=isset($options["updateOnly"])?($options["updateOnly"]?true:false):false;
 
-        if(preg_match('!'.$separator['before']."|".$separator['after'].'!i', $tablename))
+        if(preg_match('!'.$separator['before']."|".$separator['after'].'!i', $tablename)) {
             throw new Void_Exception_Databroker('Table name is not safe', Void_Exception_Databroker::INFO_NOT_SAFE);
-        if($tablename == "")
+        }
+        if($tablename == "") {
             throw new Void_Exception_Databroker('No table specified for save action', Void_Exception_Databroker::TABLENAME_NOT_SET);
+        }
         if(is_array($id) && $idName != '') {
             throw new Void_Exception_Databroker('idName should not be used when id is an array for a combined primary key request', Void_Exception_Databroker::IDNAME_SHOULD_NOT_BE_SET);
         }
-        if($idName == "") $idName = $tablename."Id";
+        if($idName == "") {
+            $idName = $tablename."Id";
+        }
 
-        if(count($arg_array) == 0) return true;
+        if(count($arg_array) == 0) {
+            return true;
+        }
 
 
         $values = array();
@@ -238,8 +247,9 @@ class Db
                     $recordSet->closeCursor();
                     return $result;
                 }
-                else
+                else {
                     return false;
+                }
             }
             else if($returnId) {
                 return $id;
@@ -250,7 +260,9 @@ class Db
 
     static public function entryExists($pdo, $tablename, $id, $idName)
     {
-        if(is_null($id) || $id == "") return false;
+        if(is_null($id) || $id == "") {
+            return false;
+        }
         if($pdo instanceOf \PDO) {
             return $pdo->query("SELECT * FROM ".$tablename." WHERE ".$idName." = ".$pdo->quote($id));
         }

@@ -46,7 +46,8 @@ class StringFunction {
             )+%xs', $string);
     }
 
-    static public function canBeConvertedToUtf8($str) {
+    static public function canBeConvertedToUtf8($str)
+    {
         $len = strlen($str);
         for($i = 0; $i < $len; $i++){
             $c = ord($str[$i]);
@@ -68,7 +69,8 @@ class StringFunction {
         return true;
     }
 
-    static public function getAccentCharacterMap() {
+    static public function getAccentCharacterMap()
+    {
         return array(
             'Š'=>'S',    'Œ'=>'OE',    'Ž'=>'Z',    'š'=>'s',    'œ'=>'oe',    'ž'=>'z',    'Ÿ'=>'Y',    '¥'=>'Y',    'µ'=>'u',    'À'=>'A',    'Á'=>'A',
             'Â'=>'A',    'Ã'=>'A',    'Ä'=>'A',    'Å'=>'A',    'Æ'=>'AE',    'Ç'=>'C',    'È'=>'E',    'É'=>'E',    'Ê'=>'E',    'Ë'=>'E',    'Ì'=>'I',    'Í'=>'I',
@@ -84,12 +86,24 @@ class StringFunction {
         return str_replace(array_keys($replacePairs), array_values($replacePairs), $string);
     }
 
-    static public function get($string, $exception = array()) { return self::clean($string, $exception); }
-    static public function convertToCleanString($string, $exception = array()) { return self::clean($string, $exception); }
+    static public function get($string, $exception = array())
+    {
+        return self::clean($string, $exception);
+    }
+
+    static public function convertToCleanString($string, $exception = array())
+    {
+        return self::clean($string, $exception);
+    }
+
     static public function clean($string, $exception = array())
     {
-        if(strlen($string) === 0) return $string;
-        if(!is_array($exception)) $exception = array($exception);
+        if(strlen($string) === 0) {
+            return $string;
+        }
+        if(!is_array($exception)) {
+            $exception = array($exception);
+        }
 
         $string = strip_tags($string);
         if(!self::isUTF8($string)) {
@@ -123,10 +137,12 @@ class StringFunction {
             )
         ));
 
-        if(strlen($clear) > 0)
+        if(strlen($clear) > 0) {
             return $clear;
-        else
+        }
+        else {
             throw new Exception("convertToCleanString was not able to create a valid clean name for ({$string})");
+        }
     }
 
     static public function implodeLast($glue, $glueLast, array $array)
