@@ -48,9 +48,11 @@ class Socket
                     isset($certData['privatekey']) ? $certData['privatekey'] : null,
                     isset($certData['passphrase']) ? $certData['passphrase'] : null
                 );
+                $this->ssl = true;
             }
             else if(is_string($certData)) {
                 $this->setCertData($certData);
+                $this->ssl = true;
             }
         }
         $this->createSocket($host, $port);

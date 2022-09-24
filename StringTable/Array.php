@@ -1,6 +1,5 @@
 <?php
 namespace Void\StringTable;
-
 class Array2 implements \ArrayAccess {
     public function replaceFile($file) {
         if(file_exists($file)) {

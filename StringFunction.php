@@ -13,6 +13,7 @@ class StringFunction {
     {
         return htmlentities($string, $quoteStyle, $charset, $double_encode);
     }
+
     static public function utf8_htmlentities($string, $quoteStyle=null, $charset='UTF-8', $double_encode=null)
     {
         return self::htmlentities_utf8($string, $quoteStyle, $charset, $double_encode);
@@ -80,6 +81,7 @@ class StringFunction {
             'ô'=>'o',    'õ'=>'o',    'ö'=>'o',    'ø'=>'o',    'ù'=>'u',    'ú'=>'u',    'û'=>'u',    'ü'=>'u',    'ý'=>'y',    'ÿ'=>'y',
         );
     }
+
     static public function removeAccents($string)
     {
         $replacePairs=self::getAccentCharacterMap();
@@ -341,5 +343,17 @@ class StringFunction {
             }
         }
         return $truncate;
+    }
+
+    static public function replaceStart($search, $replace, $string, $startPos = 0)
+    {
+        if(substr($string, $startPos, strlen($search)) === $search) {
+            return substr_replace($string, $replace, strpos($string, $search, $startPos), strlen($search));
+        }
+        return $string;
+    }
+
+    static public function camel2dashed($className) {
+        return strtolower(preg_replace('/([a-zA-Z])(?=[A-Z])/', '$1-', $className));
     }
 }
