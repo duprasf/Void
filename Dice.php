@@ -103,14 +103,21 @@ class Dice {
                 $rollDesc[] = array('value'=>$val, 'reroll1'=>$failsafe);
                 $rolls[]=$val;
             }
-            self::$reroll1onLastRoll = self::$reroll1onLastRoll ?: $failsafe > 0;
             if($removeLowest) {
                 $removedPos = array_search(min($rolls), $rolls);
                 $rollDesc[$removedPos]['removed'] = true;
                 unset($rolls[$removedPos]);
             }
+            self::$reroll1onLastRoll = false;
+            foreach($rollDesc as $r) {
+                if($r['reroll1'] && !$r['removed']) {
+                    self::$reroll1onLastRoll = true;
+                    break;
+                }
+            }
+
             $total+= array_sum($rolls);
-            self::$lastRoll[] = array('value'=>$total, 'desc'=>$rollDesc);
+            self::$lastRoll[] = array('value'=>$total, 'desc'=>$rollDesc, 'rerolled1'=>self::$reroll1onLastRoll);
             return $total;
         }, $param);
 
