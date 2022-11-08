@@ -5,6 +5,7 @@ class Dice {
     static public $lastResult;
     static public $lastRoll;
     static public $lastRollExpression;
+    static public $lastReplacement = [];
     static public $reroll1onLastRoll = false;
 
     static public function resetLastRoll()
@@ -15,15 +16,16 @@ class Dice {
         self::$lastResult=null;
     }
 
-    static public function getLastRollString()
+    static public function getLastRollString($addDiceToDescription=false)
     {
         $returnString = str_replace(array("(", ")"), array('\(','\)'), self::$lastRollExpression);
         // replace dices in math expression ($param) with results of roll
-        $returnString = preg_replace_callback('((\d*)d(\d+))i', function($matches) {
 
+        $placement = 0;
+        $returnString = preg_replace_callback('((\d*)d(\d+))i', function($matches) use (&$placement){
             $string = '';
-            foreach(self::$lastRoll as $cr) {
-                $string = '[';
+            $cr=self::$lastRoll[$placement++];
+                $string = '['.($addDiceToDescription ? $matches[0].' | ':'');
                 $eachDice = [];
                 foreach($cr['desc'] as $die) {
                     $s = str_repeat('¹', $die['reroll1']);
@@ -36,18 +38,22 @@ class Dice {
                     $eachDice[] = $s;
                 }
                 $string.= implode(', ',$eachDice).']';
-            }
+
             return $string;
         }, $returnString);
+        $returnString = str_replace(array('\(', '\)'), array('(',')'), $returnString);
+        foreach(self::$lastReplacement as $rep) {
+            $returnString = preg_replace('(\(%([a-zA-Z0-9-]+)\))', '[\1|'.$rep.']', $returnString);
+        }
         return $returnString;
     }
 
-    static public function getLastRoll()
+    static public function getLastRoll($addDiceToDescription=false)
     {
         return array(
-            "expression"=>self::$lastRollExpression,
+            "expression"=>preg_replace('(\(%([a-zA-Z0-9-]+)\))', '\1', self::$lastRollExpression),
             "roll"=>self::$lastRoll,
-            "rollString"=>self::getLastRollString(),
+            "rollString"=>self::getLastRollString($addDiceToDescription),
             "rerolled1"=>self::$reroll1onLastRoll,
             "result"=>self::$lastResult,
         );
@@ -81,10 +87,12 @@ class Dice {
     * @param bool $reroll1 if set to true, all rolled 1 will be rerolled.
     * @param bool $removeLowest if set to true one extra dice will be rolled per diceset and the lowest dice will be removed before returning the result.
     */
-    static public function roll($param, $reroll1 = false, $removeLowest = false)
+    static public function roll($param, $reroll1 = false, $removeLowest = false, ...$replacement)
     {
         self::resetLastRoll();
         self::$lastRollExpression = $param;
+        self::$lastReplacement = $replacement;
+
         $param = str_replace(array("(", ")"), array('\(','\)'), $param);
         // replace dices in math expression ($param) with results of roll
         $param = preg_replace_callback('((\d*)d(\d+))i', function($matches) use ($reroll1, $removeLowest) {
@@ -122,6 +130,7 @@ class Dice {
         }, $param);
 
         $param = str_replace(array('\(', '\)'), array('(',')'), $param);
+        $param = preg_replace(['(\(%[a-zA-Z0-9-]+\))'], $replacement, $param);
 
         // send param to be evaluated as math expression
         self::$lastResult = $param != '' ? EvalMath::e($param) : 0;
