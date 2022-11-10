@@ -22,7 +22,7 @@ class Dice {
         // replace dices in math expression ($param) with results of roll
 
         $placement = 0;
-        $returnString = preg_replace_callback('((\d*)d(\d+))i', function($matches) use (&$placement){
+        $returnString = preg_replace_callback('((\d*)d(\d+))i', function($matches) use (&$placement, $addDiceToDescription){
             $string = '';
             $cr=self::$lastRoll[$placement++];
                 $string = '['.($addDiceToDescription ? $matches[0].' | ':'');
