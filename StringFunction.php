@@ -356,4 +356,12 @@ class StringFunction {
     static public function camel2dashed($className) {
         return strtolower(preg_replace('/([a-zA-Z])(?=[A-Z])/', '$1-', $className));
     }
+
+    static public function base64url_encode($data) {
+      return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+    }
+
+    static public function base64url_decode($data) {
+      return base64_decode(str_pad(strtr($data, '-_', '+/'), strlen($data) % 4, '=', STR_PAD_RIGHT));
+    }
 }
