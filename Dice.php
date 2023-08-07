@@ -118,7 +118,7 @@ class Dice {
             }
             self::$reroll1onLastRoll = false;
             foreach($rollDesc as $r) {
-                if($r['reroll1'] && !$r['removed']) {
+                if(isset($r['reroll1']) && $r['reroll1'] && !(isset($r['removed']) && $r['removed'])) {
                     self::$reroll1onLastRoll = true;
                     break;
                 }
