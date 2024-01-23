@@ -109,12 +109,12 @@ class StringFunction {
 
         $string = strip_tags($string);
         if(!self::isUTF8($string)) {
-            $string = utf8_encode($string);
+            $string = mb_convert_encoding($string, 'UTF-8');
         }
         // this switch to utf-8 only to decode it a line later is nessecary for
         // entities that are in utf-8 but no equivalent in ISO like &hellip;
-        $string = html_entity_decode($string, null, 'utf-8');
-        $string = utf8_decode($string);
+        $string = html_entity_decode($string, 0, 'UTF-8');
+        $string = mb_convert_encoding($string, 'ISO-8859-1');
 
         $replacePairs=self::getAccentCharacterMap();
         // this following characters are the &ndash; and the &mdash; converted to the normal -
@@ -124,7 +124,7 @@ class StringFunction {
         $replacePairs['_']=' ';
 
         foreach($replacePairs as $key=>$val) {
-            $replacePairs[utf8_decode($key)] = $val;
+            $replacePairs[mb_convert_encoding($key, 'ISO-8859-1')] = $val;
         }
 
         $exception[]='\w';
