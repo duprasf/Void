@@ -26,9 +26,19 @@ class File {
         return static::humanReadableSize(filesize($filename), $decimals);
     }
 
-    static function importSVG($file) {
+    static public function importSVG($file)
+    {
         return preg_replace('((?:<?\?xml |<!DOCTYPE )[^>]+>)', '', file_get_contents($file));
         //<?xml version="1.0" encoding="utf-8"? >
         //<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+    }
+
+    static protected $mimes;
+    static public function mimeToExtension($mimeType)
+    {
+        if(!self::$mimes) {
+            self::$mimes=include(__DIR__.'/mimeToExtension.php');
+        }
+        return self::$mimes[$mimeType] ?? false;
     }
 }
