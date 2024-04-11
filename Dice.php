@@ -152,7 +152,8 @@ class Dice
     *
     * @param string $param this should be an expression like 3D6 or 2D20+15 or any arithmetic and D (for dice) format.
     * @param bool $reroll1 if set to true, all rolled 1 will be rerolled.
-    * @param bool $removeLowest if set to true the lowest dice will be removed before returning the result.
+    * @param bool $removeLowest if set to true one extra dice will be rolled per diceset and the lowest dice will be removed before returning the result.
+    *    ******** $removeLowest is not used in ->min() and ->max() since all dices have the same values. It is there only for compatibility with ->roll()
     */
     public static function max($param, $reroll1 = false, $removeLowest = false)
     {
@@ -173,7 +174,8 @@ class Dice
     *
     * @param string $param this should be an expression like 3D6 or 2D20+15 or any arithmetic and D (for dice) format.
     * @param bool $reroll1 if set to true, all rolled 1 will be rerolled.
-    * @param bool $removeLowest if set to true the lowest dice will be removed before returning the result.
+    * @param bool $removeLowest if set to true one extra dice will be rolled per diceset and the lowest dice will be removed before returning the result.
+    *    ******** $removeLowest is not used in ->min() and ->max() since all dices have the same values. It is there only for compatibility with ->roll()
     */
     public static function min($param, $reroll1 = false, $removeLowest = false)
     {
