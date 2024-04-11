@@ -1,4 +1,5 @@
 <?php
+
 namespace Void\WebsocketServer;
 
 use Void\WebsocketServer\Client;

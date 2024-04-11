@@ -1,7 +1,9 @@
 <?php
+
 namespace Void;
 
-class StringTable implements \ArrayAccess {
+class StringTable implements \ArrayAccess
+{
     protected $__str;
     protected $defaultSection;
     protected $defaultSectionStack = array();
@@ -10,7 +12,7 @@ class StringTable implements \ArrayAccess {
     protected $utf8Decode = false;
     protected static $tablesList = array();
 
-    const NOT_FOUND_STRING = 'Not found:';
+    public const NOT_FOUND_STRING = 'Not found:';
 
     /**
     * Get a stringtable with the main file, if the file was already loaded it will not be reloaded again
@@ -19,34 +21,38 @@ class StringTable implements \ArrayAccess {
     * @param array|string|bool $options default options "section"=>"","lang"=>"","autoEncode"=>true,"utf8Decode"=>false
     * @return Void\StringTable
     */
-    public static function get($file, $options=null)
+    public static function get($file, $options = null)
     {
-        if(is_string($options))
-            $options = array("section"=>$options);
-        if(is_bool($options))
-            $options = array("autoEncode"=>$options);
-        if(!is_array($options))
+        if(is_string($options)) {
+            $options = array("section" => $options);
+        }
+        if(is_bool($options)) {
+            $options = array("autoEncode" => $options);
+        }
+        if(!is_array($options)) {
             $options = array();
+        }
 
         $args = func_get_args();
-        if(isset($args[2]))
-            $options["lang"]=$args[2];
-        if(isset($args[3]))
-            $options["autoEncode"]=$args[3];
+        if(isset($args[2])) {
+            $options["lang"] = $args[2];
+        }
+        if(isset($args[3])) {
+            $options["autoEncode"] = $args[3];
+        }
 
-        $defaultOptions = array("section"=>"common",
-            "lang"=>isset($GLOBALS['lang']) ? $GLOBALS['lang'] : "eng",
-            "autoEncode"=>false,
-            "utf8Decode"=>false,
-            "name"=>$file,
+        $defaultOptions = array("section" => "common",
+            "lang" => isset($GLOBALS['lang']) ? $GLOBALS['lang'] : "eng",
+            "autoEncode" => false,
+            "utf8Decode" => false,
+            "name" => $file,
         );
         $options = array_intersect_key($options, $defaultOptions) + $defaultOptions;
 
-        if(!(isset(self::$tablesList[$options['name']]) && self::$tablesList[$options['name']] instanceof stringTable)){
+        if(!(isset(self::$tablesList[$options['name']]) && self::$tablesList[$options['name']] instanceof stringTable)) {
             try {
                 self::$tablesList[$options['name']] = static::getNewObject($file);
-            }
-            catch(Exception $e) {
+            } catch(Exception $e) {
                 // display warning message
                 exit($e->getMessage());
             }
@@ -57,15 +63,18 @@ class StringTable implements \ArrayAccess {
         return self::$tablesList[$options['name']];
     }
 
-    static protected function getNewObject($file) {
+    protected static function getNewObject($file)
+    {
         return new self($file);
     }
 
-    protected function __construct($file) {
+    protected function __construct($file)
+    {
         $this->replaceFile($file);
     }
 
-    public function replaceFile($file) {
+    public function replaceFile($file)
+    {
         if(file_exists($file)) {
             $this->__str = new \DomDocument();
             $this->__str->preserveWhiteSpace = false;
@@ -80,9 +89,11 @@ class StringTable implements \ArrayAccess {
     * @param string $file the file to be merged
     * @param bool $insertBefore if set to true the information in the new file will take precidence to the existing strings
     */
-    public function mergeFile($file, $insertBefore = false) {
-        if($this->__str == null) { $this->replaceFile($file); }
-        else if(file_exists($file)) {
+    public function mergeFile($file, $insertBefore = false)
+    {
+        if($this->__str == null) {
+            $this->replaceFile($file);
+        } elseif(file_exists($file)) {
             $dDoc = new \DomDocument();
             $dDoc->preserveWhiteSpace = false;
             $dDoc->validateOnParse = false;
@@ -90,13 +101,12 @@ class StringTable implements \ArrayAccess {
 
             $items = $dDoc->getElementsByTagName('section');
             foreach($items as $item) {
-                if($item instanceOf DOMNode) {
+                if($item instanceof DOMNode) {
                     $r = $this->__str->importNode($item, true);
                     if($r instanceof DOMElement) {
                         if($insertBefore) {
                             $this->__str->documentElement->insertBefore($r, $this->__str->documentElement->firstChild);
-                        }
-                        else {
+                        } else {
                             $this->__str->documentElement->appendChild($r);
                         }
                     }
@@ -105,32 +115,39 @@ class StringTable implements \ArrayAccess {
         }
     }
 
-    public function __invoke($var, $options=null) {
+    public function __invoke($var, $options = null)
+    {
         return $this->getStr($var, $options);
     }
 
-    public function getStr($var, $options=null){
-        if(is_string($options))
-            $options = array("section"=>$options);
-        if(is_bool($options))
-            $options = array("autoEncode"=>$options);
-        if(!is_array($options))
+    public function getStr($var, $options = null)
+    {
+        if(is_string($options)) {
+            $options = array("section" => $options);
+        }
+        if(is_bool($options)) {
+            $options = array("autoEncode" => $options);
+        }
+        if(!is_array($options)) {
             $options = array();
+        }
 
         $args = func_get_args();
-        if(isset($args[2]))
-            $options["lang"]=$args[2];
-        if(isset($args[3]))
-            $options["internal"]=$args[3];
+        if(isset($args[2])) {
+            $options["lang"] = $args[2];
+        }
+        if(isset($args[3])) {
+            $options["internal"] = $args[3];
+        }
 
-        $defaultOptions = array("section"=>$this->defaultSection,
-            "lang"=>$this->defaultLang,
-            "internal"=>false,
-            "autoEncode"=>$this->autoEncode,
-            "utf8Decode"=>$this->utf8Decode,
-            "returnFalseWhenNotFound"=>false,
+        $defaultOptions = array("section" => $this->defaultSection,
+            "lang" => $this->defaultLang,
+            "internal" => false,
+            "autoEncode" => $this->autoEncode,
+            "utf8Decode" => $this->utf8Decode,
+            "returnFalseWhenNotFound" => false,
         );
-        extract(array_intersect_key($options, $defaultOptions)+$defaultOptions);
+        extract(array_intersect_key($options, $defaultOptions) + $defaultOptions);
 
         $return = "";
         $value = array();
@@ -141,21 +158,20 @@ class StringTable implements \ArrayAccess {
             if(!is_string($section) || !is_string($var) || !is_string($lang)) {
                 throw new Exception\StringTable('Missing some information in the string table: section: "'.$section.'", var: "'.$var.'", lang: "'.$lang.'"');
             }
-            if($value = $xpath->query("section[@name='{$section}']/str[@name='{$var}']/".substr($lang,0,2))->item(0)) {
+            if($value = $xpath->query("section[@name='{$section}']/str[@name='{$var}']/".substr($lang, 0, 2))->item(0)) {
                 $return = $value->nodeValue;
             }
             // if the string is available in the DEFAULT_LANGUAGE return it
-            else if(defined('DEFAULT_LANGUAGE') && $value = $xpath->query("section[@name='{$section}']/str[@name='{$var}']/".substr(DEFAULT_LANGUAGE,0,2))->item(0)) {
+            elseif(defined('DEFAULT_LANGUAGE') && $value = $xpath->query("section[@name='{$section}']/str[@name='{$var}']/".substr(DEFAULT_LANGUAGE, 0, 2))->item(0)) {
                 $return = $value->nodeValue;
             }
             // if nothing was good enough to return, return the first element of this string
-            else if($value = $xpath->query("section[@name='{$section}']/str[@name='{$var}']/*[1]")->item(0)) {
+            elseif($value = $xpath->query("section[@name='{$section}']/str[@name='{$var}']/*[1]")->item(0)) {
                 $return = $value->nodeValue;
-            }
-            else {
+            } else {
                 $return = self::NOT_FOUND_STRING." {$section}/{$var}";
                 if($section != "common") {
-                    $common = $this->getStr($var, array("section"=>"common", "internal"=>true));
+                    $common = $this->getStr($var, array("section" => "common", "internal" => true));
                     if(strpos($common, self::NOT_FOUND_STRING." common/{$var}") === false) {
                         $return = $common;
                     }
@@ -164,8 +180,7 @@ class StringTable implements \ArrayAccess {
                     $return = false;
                 }
             }
-        }
-        else {
+        } else {
             $return = "stringTable was not able to retreive your information, malformed XML maybe?";
         }
         if($autoEncode) {
@@ -177,19 +192,23 @@ class StringTable implements \ArrayAccess {
         return $return;
     }
 
-    public function getSection($options=null) {
-        if(is_string($options))
-            $options = array("section"=>$options);
-        if(!is_array($options))
+    public function getSection($options = null)
+    {
+        if(is_string($options)) {
+            $options = array("section" => $options);
+        }
+        if(!is_array($options)) {
             $options = array();
+        }
 
         $args = func_get_args();
-        if(isset($args[2]))
-            $options["lang"]=$args[2];
+        if(isset($args[2])) {
+            $options["lang"] = $args[2];
+        }
 
-        $defaultOptions = array("section"=>$this->defaultSection,
-            "lang"=>$this->defaultLang,
-            "autoEncode"=>$this->autoEncode,
+        $defaultOptions = array("section" => $this->defaultSection,
+            "lang" => $this->defaultLang,
+            "autoEncode" => $this->autoEncode,
         );
         $options = array_merge(array_intersect_key($options, $defaultOptions), array_diff_key($defaultOptions, $options));
         extract($options);
@@ -211,7 +230,8 @@ class StringTable implements \ArrayAccess {
         return "stringTable was not able to retreive your information, malformed XML maybe?";
     }
 
-    public function sectionExists($section) {
+    public function sectionExists($section)
+    {
         $value = array();
         if($this->__str instanceof DOMDocument) {
             // find the section and string requested
@@ -224,33 +244,40 @@ class StringTable implements \ArrayAccess {
         return false;
     }
 
-    public function getFromSection($section, $str, $lang = "") {
-        return $this->getStr($str, array("section"=>$section, "lang"=>$lang));
+    public function getFromSection($section, $str, $lang = "")
+    {
+        return $this->getStr($str, array("section" => $section, "lang" => $lang));
     }
 
-    public function setDefaultSection($section) {
+    public function setDefaultSection($section)
+    {
         $this->defaultSection = $section;
         return $this;
     }
 
-    public function getDefaultSection() {
+    public function getDefaultSection()
+    {
         return $this->defaultSection;
     }
 
-    public function pushSection($newSection) {
+    public function pushSection($newSection)
+    {
         array_push($this->defaultSectionStack, $this->defaultSection);
         $this->defaultSection = $newSection;
         return $this;
     }
 
-    public function popSection() {
+    public function popSection()
+    {
         $newSection = array_pop($this->defaultSectionStack);
-        if(!is_null($newSection))
+        if(!is_null($newSection)) {
             $this->defaultSection = $newSection;
+        }
         return $this;
     }
 
-    public function resetSection() {
+    public function resetSection()
+    {
         $newSection = $this->defaultSectionStack[0];
         if(!is_null($newSection)) {
             $this->defaultSection = $newSection;
@@ -259,38 +286,46 @@ class StringTable implements \ArrayAccess {
         return $this;
     }
 
-    public function setDefaultLang($lang) {
+    public function setDefaultLang($lang)
+    {
         $this->defaultLang = $lang;
         return $this;
     }
 
-    public function setAutoEncode($autoEncode) {
-        $this->autoEncode = $autoEncode?true:false;
+    public function setAutoEncode($autoEncode)
+    {
+        $this->autoEncode = $autoEncode ? true : false;
         return $this;
     }
 
-    public function setUtf8Decode($utf8Decode) {
-        $this->utf8Decode = $utf8Decode?true:false;
+    public function setUtf8Decode($utf8Decode)
+    {
+        $this->utf8Decode = $utf8Decode ? true : false;
         return $this;
     }
 
-    public function __get($name) {
+    public function __get($name)
+    {
         return $this->getStr($name);
     }
 
-    public function offsetExists ($offset) {
+    public function offsetExists($offset)
+    {
         if(strpos($this->getStr($offset), self::NOT_FOUND_STRING) === false) {
             return true;
         }
         return false;
     }
-    public function offsetGet ($offset){
+    public function offsetGet($offset)
+    {
         return $this->getStr($offset);
     }
-    public function offsetSet ($offset, $value){
+    public function offsetSet($offset, $value)
+    {
         return false;
     }
-    public function offsetUnset ($offset){
+    public function offsetUnset($offset)
+    {
         return false;
     }
 }

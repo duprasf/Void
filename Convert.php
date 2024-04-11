@@ -1,29 +1,31 @@
 <?php
+
 namespace Void;
 
-class Convert {
-    static public function cm2inches($cm)
+class Convert
+{
+    public static function cm2inches($cm)
     {
-        return intval($cm)*0.393701;
+        return intval($cm) * 0.393701;
     }
 
-    static public function inches2cm($inches)
+    public static function inches2cm($inches)
     {
-        return intval($inches)*2.54;
+        return intval($inches) * 2.54;
     }
 
-    static public function m2ft($m)
+    public static function m2ft($m)
     {
-        return intval($m)*3.28084;
+        return intval($m) * 3.28084;
     }
 
-    static public function kg2lbs($kg)
+    public static function kg2lbs($kg)
     {
-        return intval($kg)*2.20462;
+        return intval($kg) * 2.20462;
     }
 
-    static public function lbs2kg($lbs)
+    public static function lbs2kg($lbs)
     {
-        return intval($lbs)*0.453592;
+        return intval($lbs) * 0.453592;
     }
 }

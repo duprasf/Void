@@ -1,4 +1,5 @@
 <?php
+
 namespace Void;
 
 class SemaphoreFile extends Semaphore
@@ -8,19 +9,20 @@ class SemaphoreFile extends Semaphore
     public function __construct($total = null, $file = null)
     {
         parent::__construct($total);
-        if(!is_null($file)) $this->setFile($file);
-        else $this->setFile(tempnam(sys_get_temp_dir(), 'semaphore-'));
+        if(!is_null($file)) {
+            $this->setFile($file);
+        } else {
+            $this->setFile(tempnam(sys_get_temp_dir(), 'semaphore-'));
+        }
     }
 
     public function setFile($file)
     {
         if(is_dir($file) && is_writable($file)) {
             $this->file = tempnam($file, 'semaphore-');
-        }
-        elseif((file_exists($file) && is_writable($file)) || (!is_dir($file) && is_dir(dirname($file)) && is_writable(dirname($file)))) {
+        } elseif((file_exists($file) && is_writable($file)) || (!is_dir($file) && is_dir(dirname($file)) && is_writable(dirname($file)))) {
             $this->file = $file;
-        }
-        else {
+        } else {
             $this->file = null;
         }
         return $this;
@@ -43,16 +45,17 @@ class SemaphoreFile extends Semaphore
 
     public function checkin()
     {
-        if(file_exists($this->file))
+        if(file_exists($this->file)) {
             return unlink($this->file);
+        }
         return false;
     }
 
     public function detectProblems()
     {
         return array(
-            "fileExists"=>file_exists($this->file),
-            "isWritable"=>$this->isFileWritable(),
+            "fileExists" => file_exists($this->file),
+            "isWritable" => $this->isFileWritable(),
         );
     }
 }

@@ -7,14 +7,14 @@ class HumanReadableSizeConvertion
     public static function toHumanReadable($bytes, $decimals = 2, array|string $specificSufix = 'B')
     {
         $sz = str_split('BkMGTPEZY');
-        $factor = floor((strlen($bytes) - 1) / 3)*1;
+        $factor = floor((strlen($bytes) - 1) / 3) * 1;
         $size = sprintf("%.{$decimals}f", $bytes / pow(1024, $factor));
 
         if(!isset($specificSufix[$factor]) && !isset($sz[$factor])) {
             return false;
         }
         if(is_array($specificSufix)) {
-            if(isset($specificSufix[$factor])){
+            if(isset($specificSufix[$factor])) {
                 return $size. ' '.$specificSufix[$factor];
             }
             return $size;

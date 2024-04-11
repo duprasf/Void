@@ -1,4 +1,5 @@
 <?php
+
 namespace Void;
 
 class Diff
@@ -8,21 +9,21 @@ class Diff
     protected $mode = 'w';
     protected $beforeString = '';
     protected $afterString = '';
-    
-    const MODE_CHARACTER = 'c';
-    const MODE_WORD = 'w';
-    const MODE_LINE = 'l';
+
+    public const MODE_CHARACTER = 'c';
+    public const MODE_WORD = 'w';
+    public const MODE_LINE = 'l';
 
     public function __construct()
     {
         $this->reset();
     }
-    
-    public function __invoke($before, $after, array $options = array()) 
+
+    public function __invoke($before, $after, array $options = array())
     {
         return $this->diff($before, $after, $options);
     }
-    
+
     public function reset()
     {
         $this->computedDiff = null;
@@ -32,22 +33,20 @@ class Diff
         $this->afterString = '';
         return $this;
     }
-    
+
     protected function split($string, $separators, $end, array &$positions = null)
     {
         $positions = array();
         $l = strlen($string);
         $split = array();
-        for($p = 0; $p < $l;)
-        {
+        for($p = 0; $p < $l;) {
             $e = strcspn($string, $separators.$end, $p);
             $e += strspn($string, $separators, $p + $e);
             $split[] = substr($string, $p, $e);
             $positions[] = $p;
             $p += $e;
             if(strlen($end)
-            && ($e = strspn($string, $end, $p)))
-            {
+            && ($e = strspn($string, $end, $p))) {
                 $split[] = substr($string, $p, $e);
                 $positions[] = $p;
                 $p += $e;
@@ -59,22 +58,23 @@ class Diff
 
     public function setOptions(array $options)
     {
-        if(isset($options['mode'])) $this->mode = $options['mode'];
-        
+        if(isset($options['mode'])) {
+            $this->mode = $options['mode'];
+        }
+
         return $this;
     }
-    
+
     public function diff($before, $after, array $options = array())
     {
         $this->setOptions($options);
         $this->beforeString = $before;
         $this->afterString = $after;
-        
+
         $mode = $this->mode;
         $for_patch = true;
-        
-        switch($mode)
-        {
+
+        switch($mode) {
             case self::MODE_CHARACTER:
                 $lb = strlen($before);
                 $la = strlen($after);
@@ -96,55 +96,51 @@ class Diff
                 $la = count($after);
                 break;
         }
-        
+
         $diff = array();
-        for($b = $a = 0; $b < $lb && $a < $la;)
-        {
+        for($b = $a = 0; $b < $lb && $a < $la;) {
             for($pb = $b; $a < $la && $pb < $lb && $after[$a] === $before[$pb]; ++$a, ++$pb);
-            if($pb !== $b)
-            {
+            if($pb !== $b) {
                 $diff[] = array(
-                    'change'=>'=',
-                    'position'=>($mode === 'c'  ? $b : $posb[$b]),
-                    'length'=>($mode === 'c' ? $pb - $b : $posb[$pb] - $posb[$b])
+                    'change' => '=',
+                    'position' => ($mode === 'c' ? $b : $posb[$b]),
+                    'length' => ($mode === 'c' ? $pb - $b : $posb[$pb] - $posb[$b])
                 );
                 $b = $pb;
             }
-            if($b === $lb)
+            if($b === $lb) {
                 break;
-            for($pb = $b; $pb < $lb; ++$pb)
-            {
-                for($pa = $a ; $pa < $la && $after[$pa] !== $before[$pb]; ++$pa);
-                if($pa !== $la)
-                    break;
             }
-            if($pb !== $b)
-            {
+            for($pb = $b; $pb < $lb; ++$pb) {
+                for($pa = $a ; $pa < $la && $after[$pa] !== $before[$pb]; ++$pa);
+                if($pa !== $la) {
+                    break;
+                }
+            }
+            if($pb !== $b) {
                 $diff[] = array(
-                    'change'=>'-',
-                    'position'=>($mode === 'c'  ? $b : $posb[$b]),
-                    'length'=>($mode === 'c' ? $pb - $b : $posb[$pb] - $posb[$b])
+                    'change' => '-',
+                    'position' => ($mode === 'c' ? $b : $posb[$b]),
+                    'length' => ($mode === 'c' ? $pb - $b : $posb[$pb] - $posb[$b])
                 );
                 $b = $pb;
             }
-            if($pa !== $a)
-            {
-                $position = ($mode === 'c'  ? $a : $posa[$a]);
+            if($pa !== $a) {
+                $position = ($mode === 'c' ? $a : $posa[$a]);
                 $length = ($mode === 'c' ? $pa - $a : $posa[$pa] - $posa[$a]);
                 $change = array(
-                    'change'=>'+',
-                    'position'=>$position,
-                    'length'=>$length
+                    'change' => '+',
+                    'position' => $position,
+                    'length' => $length
                 );
-                if($for_patch)
-                {
-                    if($mode === 'c')
+                if($for_patch) {
+                    if($mode === 'c') {
                         $patch = substr($after, $position, $length);
-                    else
-                    {
+                    } else {
                         $patch = $after[$a];
-                        for(++$a; $a < $pa; ++$a)
+                        for(++$a; $a < $pa; ++$a) {
                             $patch .= $after[$a];
+                        }
                     }
                     $change['patch'] = $patch;
                 }
@@ -152,24 +148,22 @@ class Diff
                 $a = $pa;
             }
         }
-        if($a < $la)
-        {
-            $position = ($mode === 'c'  ? $a : $posa[$a]);
+        if($a < $la) {
+            $position = ($mode === 'c' ? $a : $posa[$a]);
             $length = ($mode === 'c' ? $la - $a : $posa[$la] - $posa[$a]);
             $change = array(
-                'change'=>'+',
-                'position'=>$position,
-                'length'=>$length
+                'change' => '+',
+                'position' => $position,
+                'length' => $length
             );
-            if($for_patch)
-            {
-                if($mode === 'c')
+            if($for_patch) {
+                if($mode === 'c') {
                     $patch = substr($after, $position, $length);
-                else
-                {
+                } else {
                     $patch = $after[$a];
-                    for(++$a; $a < $la; ++$a)
+                    for(++$a; $a < $la; ++$a) {
                         $patch .= $after[$a];
+                    }
                 }
                 $change['patch'] = $patch;
             }
@@ -183,21 +177,21 @@ class Diff
     {
         return $this->computedDiff;
     }
-    
+
     public function toHtml($encodeHtmlCharacters = false)
     {
-        if(!$this->computedDiff) return false;
-        
+        if(!$this->computedDiff) {
+            return false;
+        }
+
         $html = '';
         $before = $this->beforeString;
         $after = $this->afterString;
         $td = count($this->computedDiff);
-        for($d = 0; $d < $td; ++$d)
-        {
+        for($d = 0; $d < $td; ++$d) {
             $diff = $this->computedDiff[$d];
-            $treatment = function($string) use($encodeHtmlCharacters) { return $encodeHtmlCharacters ? nl2br(htmlspecialchars($string, null, 'UTF-8')) : $string; };
-            switch($diff['change'])
-            {
+            $treatment = function ($string) use ($encodeHtmlCharacters) { return $encodeHtmlCharacters ? nl2br(htmlspecialchars($string, null, 'UTF-8')) : $string; };
+            switch($diff['change']) {
                 case '=':
                     $html .= $treatment(substr($before, $diff['position'], $diff['length']));
                     break;

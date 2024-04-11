@@ -1,7 +1,9 @@
 <?php
+
 namespace Void;
 
-class FileToText {
+class FileToText
+{
     protected $filename;
     protected $removeFileOnDestruct = array();
     protected $originalFilename;
@@ -65,7 +67,7 @@ class FileToText {
 
         $ext = pathinfo($this->filename, PATHINFO_EXTENSION);
 
-        $host = parse_url($this->filename,PHP_URL_HOST);
+        $host = parse_url($this->filename, PHP_URL_HOST);
         if($host !== null) {
             $headers = get_headers($this->filename, true);
             if(strpos($headers[0], ' 404 Not Found') !== false || (strpos($headers[0], ' 302 Found') !== false && strpos($headers['Location'], ' 404 Not Found') !== false)) {
@@ -75,7 +77,7 @@ class FileToText {
             $this->filename = tempnam(sys_get_temp_dir(), 'php-converter-');
             $this->removeFileOnDestruct[] = $this->filename;
             $stream = stream_context_create(array("http" => array("user_agent", "INFRAnet crawler 1.0")));
-            if(!copy($this->originalFilename,$this->filename, $stream)) {
+            if(!copy($this->originalFilename, $this->filename, $stream)) {
                 throw new \Exception('File could not be copied locally');
             }
         }
@@ -121,17 +123,16 @@ class FileToText {
     {
         $fileHandle = fopen($this->filename, "r");
         $line = fread($fileHandle, filesize($this->filename));
-        $lines = explode(chr(0x0D),$line);
+        $lines = explode(chr(0x0D), $line);
         $outtext = "";
-        foreach($lines as $thisline)
-        {
+        foreach($lines as $thisline) {
             $pos = strpos($thisline, chr(0x00));
             $thisline = substr($thisline, $pos, strlen($thisline));
-            if ($pos === FALSE && strlen($thisline)) {
+            if ($pos === false && strlen($thisline)) {
                 $outtext .= $thisline." ";
             }
         }
-        $outtext = preg_replace("/[^a-zA-Z0-9\s\,\.\-\n\r\t@\/\_\(\)]/","",$outtext);
+        $outtext = preg_replace("/[^a-zA-Z0-9\s\,\.\-\n\r\t@\/\_\(\)]/", "", $outtext);
         return $outtext;
     }
 
@@ -143,13 +144,19 @@ class FileToText {
 
         $zip = zip_open($this->filename);
 
-        if (!$zip || is_numeric($zip)) return false;
+        if (!$zip || is_numeric($zip)) {
+            return false;
+        }
 
         while ($zip_entry = zip_read($zip)) {
 
-            if (zip_entry_open($zip, $zip_entry) == FALSE) continue;
+            if (zip_entry_open($zip, $zip_entry) == false) {
+                continue;
+            }
 
-            if (zip_entry_name($zip_entry) != "word/document.xml") continue;
+            if (zip_entry_name($zip_entry) != "word/document.xml") {
+                continue;
+            }
 
             $content .= zip_entry_read($zip_entry, zip_entry_filesize($zip_entry));
 
@@ -170,9 +177,9 @@ class FileToText {
         $xml_filename = "xl/sharedStrings.xml"; //content file name
         $zip = new \ZipArchive();
         $output = "";
-        if(true === $zip->open($this->filename)){
+        if(true === $zip->open($this->filename)) {
             $dom = new \DOMDocument();
-            if(($index = $zip->locateName($xml_filename)) !== false){
+            if(($index = $zip->locateName($xml_filename)) !== false) {
                 $xml = $zip->getFromIndex($index);
                 $dom->loadXML($xml, LIBXML_NOENT | LIBXML_XINCLUDE | LIBXML_NOERROR | LIBXML_NOWARNING);
                 $output = strip_tags($dom->saveXML());
@@ -186,10 +193,10 @@ class FileToText {
     {
         $zip = new \ZipArchive();
         $output = "";
-        if(true === $zip->open($this->filename)){
+        if(true === $zip->open($this->filename)) {
             $slide_number = 1; //loop through slide files
             $dom = new \DOMDocument();
-            while(($index = $zip->locateName("ppt/slides/slide".$slide_number.".xml")) !== false){
+            while(($index = $zip->locateName("ppt/slides/slide".$slide_number.".xml")) !== false) {
                 $xml = $zip->getFromIndex($index);
                 $dom->loadXML($xml, LIBXML_NOENT | LIBXML_XINCLUDE | LIBXML_NOERROR | LIBXML_NOWARNING);
                 $output .= strip_tags($dom->saveXML());
@@ -212,8 +219,7 @@ class FileToText {
             if($output == '') {
                 $output = $this->decodePDF();
             }
-        }
-        catch(\Exception $e) {
+        } catch(\Exception $e) {
             $output = '';
         }
 
@@ -222,15 +228,19 @@ class FileToText {
 
     protected function setUnicode($input)
     {
-        if($input == true) $this->multibyte = 4;
-        else $this->multibyte = 2;
+        if($input == true) {
+            $this->multibyte = 4;
+        } else {
+            $this->multibyte = 2;
+        }
     }
 
     protected function decodePDF()
     {
         $infile = file_get_contents($this->filename, FILE_BINARY);
-        if (empty($infile))
+        if (empty($infile)) {
             return "";
+        }
 
         $transformations = array();
         $texts = array();
@@ -245,17 +255,19 @@ class FileToText {
             $currentObject = $objects[$i];
 
             if($this->showprogress) {
-                flush(); ob_flush();
+                flush();
+                ob_flush();
             }
 
-            if (preg_match("#stream[\n|\r](.*)endstream[\n|\r]#ismU", $currentObject . "endstream\r", $stream )) {
+            if (preg_match("#stream[\n|\r](.*)endstream[\n|\r]#ismU", $currentObject . "endstream\r", $stream)) {
                 $stream = ltrim($stream[1]);
                 $options = $this->getObjectOptions($currentObject);
 
-                if (!(empty($options["Length1"]) && empty($options["Type"]) && empty($options["Subtype"])) )
+                if (!(empty($options["Length1"]) && empty($options["Type"]) && empty($options["Subtype"]))) {
                     // if ( $options["Image"] && $options["Subtype"] )
                     // if (!(empty($options["Length1"]) &&  empty($options["Subtype"])) )
                     continue;
+                }
 
                 unset($options["Length"]);
 
@@ -266,8 +278,9 @@ class FileToText {
                         if(isset($textContainers[1])) {
                             $this->getDirtyTexts($texts, $textContainers[1]);
                         }
-                    } else
+                    } else {
                         $this->getCharTransformations($transformations, $data);
+                    }
                 }
             }
         }
@@ -286,8 +299,9 @@ class FileToText {
             $c = $input[$i];
 
             if($isComment) {
-                if ($c == '\r' || $c == '\n')
-                $isComment = false;
+                if ($c == '\r' || $c == '\n') {
+                    $isComment = false;
+                }
                 continue;
             }
 
@@ -299,24 +313,28 @@ class FileToText {
 
                 default:
                     $code = hexdec($c);
-                    if($code === 0 && $c != '0')
+                    if($code === 0 && $c != '0') {
                         return "";
+                    }
 
-                    if($isOdd)
+                    if($isOdd) {
                         $codeHigh = $code;
-                    else
+                    } else {
                         $output .= chr($codeHigh * 16 + $code);
+                    }
 
                     $isOdd = !$isOdd;
                     break;
             }
         }
 
-        if($input[$i] != '>')
+        if($input[$i] != '>') {
             return "";
+        }
 
-        if($isOdd)
+        if($isOdd) {
             $output .= chr($codeHigh * 16);
+        }
 
         return $output;
     }
@@ -332,13 +350,15 @@ class FileToText {
             $c = $input[$i];
 
             if($isComment) {
-                if ($c == '\r' || $c == '\n')
+                if ($c == '\r' || $c == '\n') {
                     $isComment = false;
+                }
                 continue;
             }
 
-            if ($c == '\0' || $c == '\t' || $c == '\r' || $c == '\f' || $c == '\n' || $c == ' ')
+            if ($c == '\0' || $c == '\t' || $c == '\r' || $c == '\f' || $c == '\n' || $c == ' ') {
                 continue;
+            }
             if ($c == '%') {
                 $isComment = true;
                 continue;
@@ -347,32 +367,37 @@ class FileToText {
                 $output .= str_repeat(chr(0), 4);
                 continue;
             }
-            if ($c < '!' || $c > 'u')
+            if ($c < '!' || $c > 'u') {
                 return "";
+            }
 
             $code = ord($input[$i]) & 0xff;
             $ords[$state++] = $code - ord('!');
 
             if ($state == 5) {
                 $state = 0;
-                for ($sum = 0, $j = 0; $j < 5; $j++)
+                for ($sum = 0, $j = 0; $j < 5; $j++) {
                     $sum = $sum * 85 + $ords[$j];
-                for ($j = 3; $j >= 0; $j--)
+                }
+                for ($j = 3; $j >= 0; $j--) {
                     $output .= chr($sum >> ($j * 8));
+                }
             }
         }
-        if ($state === 1)
+        if ($state === 1) {
             return "";
-        elseif ($state > 1) {
-            for ($i = 0, $sum = 0; $i < $state; $i++)
+        } elseif ($state > 1) {
+            for ($i = 0, $sum = 0; $i < $state; $i++) {
                 $sum += ($ords[$i] + ($i == $state - 1)) * pow(85, 4 - $i);
+            }
             for ($i = 0; $i < $state - 1; $i++) {
                 try {
                     if(false == ($o = chr($sum >> ((3 - $i) * 8)))) {
                         throw new Exception('Error');
                     }
                     $output .= $o;
-                } catch (Exception $e) { /*Dont do anything*/ }
+                } catch (Exception $e) { /*Dont do anything*/
+                }
             }
         }
 
@@ -403,8 +428,9 @@ class FileToText {
                 if (strpos($options[$j], " ") !== false) {
                     $parts = explode(" ", $options[$j]);
                     $o[$parts[0]] = $parts[1];
-                } else
+                } else {
                     $o[$options[$j]] = true;
+                }
             }
             $options = $o;
             unset($o);
@@ -416,20 +442,20 @@ class FileToText {
     protected function getDecodedStream($stream, $options)
     {
         $data = "";
-        if (empty($options["Filter"]))
+        if (empty($options["Filter"])) {
             $data = $stream;
-        else {
+        } else {
             $length = !empty($options["Length"]) ? $options["Length"] : strlen($stream);
             $_stream = substr($stream, 0, $length);
 
             foreach ($options as $key => $value) {
-                if ($key == "ASCIIHexDecode")
+                if ($key == "ASCIIHexDecode") {
                     $_stream = $this->decodeAsciiHex($_stream);
-                elseif ($key == "ASCII85Decode")
+                } elseif ($key == "ASCII85Decode") {
                     $_stream = $this->decodeAscii85($_stream);
-                elseif ($key == "FlateDecode")
+                } elseif ($key == "FlateDecode") {
                     $_stream = $this->decodeFlate($_stream);
-                elseif ($key == "Crypt") { // TO DO
+                } elseif ($key == "Crypt") { // TO DO
                 }
             }
             $data = $_stream;
@@ -442,17 +468,14 @@ class FileToText {
         for ($j = 0; $j < count($textContainers); $j++) {
             if (preg_match_all("#\[(.*)\]\s*TJ[\n|\r]#ismU", $textContainers[$j], $parts)) {
                 $parts = isset($parts[1]) ? $parts[1] : array();
-            }
-            elseif (preg_match_all("#T[d|w|m|f]\s*(\(.*\))\s*Tj[\n|\r]#ismU", $textContainers[$j], $parts)) {
+            } elseif (preg_match_all("#T[d|w|m|f]\s*(\(.*\))\s*Tj[\n|\r]#ismU", $textContainers[$j], $parts)) {
                 $parts = isset($parts[1]) ? $parts[1] : array();
-            }
-            elseif (preg_match_all("#T[d|w|m|f]\s*(\[.*\])\s*Tj[\n|\r]#ismU", $textContainers[$j], $parts)) {
+            } elseif (preg_match_all("#T[d|w|m|f]\s*(\[.*\])\s*Tj[\n|\r]#ismU", $textContainers[$j], $parts)) {
                 $parts = isset($parts[1]) ? $parts[1] : array();
             }
             if(is_array($parts)) {
                 $texts[] = ' '.$this->getArrayAsString($parts);
-            }
-            else if(is_string($parts)) {
+            } elseif(is_string($parts)) {
                 $texts[] = ' '.$parts;
             }
         }
@@ -461,7 +484,7 @@ class FileToText {
     public function getArrayAsString($a, $glue = '')
     {
         $that = $this;
-        return implode($glue, array_map(function($v) use($that){ return is_array($v) ? $that->getArrayAsString($v) : $v; }, $a));
+        return implode($glue, array_map(function ($v) use ($that) { return is_array($v) ? $that->getArrayAsString($v) : $v; }, $a));
     }
 
     protected function getCharTransformations(&$transformations, $stream)
@@ -473,8 +496,9 @@ class FileToText {
             $count = $chars[$j][1];
             $current = explode("\n", trim($chars[$j][2]));
             for ($k = 0; $k < $count && $k < count($current); $k++) {
-                if (preg_match("#<([0-9a-f]{2,4})>\s+<([0-9a-f]{4,512})>#is", trim($current[$k]), $map))
+                if (preg_match("#<([0-9a-f]{2,4})>\s+<([0-9a-f]{4,512})>#is", trim($current[$k]), $map)) {
                     $transformations[str_pad($map[1], 4, "0")] = $map[2];
+                }
             }
         }
         for ($j = 0; $j < count($ranges); $j++) {
@@ -486,15 +510,17 @@ class FileToText {
                     $to = hexdec($map[2]);
                     $_from = hexdec($map[3]);
 
-                    for ($m = $from, $n = 0; $m <= $to; $m++, $n++)
+                    for ($m = $from, $n = 0; $m <= $to; $m++, $n++) {
                         $transformations[sprintf("%04X", $m)] = sprintf("%04X", $_from + $n);
+                    }
                 } elseif (preg_match("#<([0-9a-f]{4})>\s+<([0-9a-f]{4})>\s+\[(.*)\]#ismU", trim($current[$k]), $map)) {
                     $from = hexdec($map[1]);
                     $to = hexdec($map[2]);
                     $parts = preg_split("#\s+#", trim($map[3]));
 
-                    for ($m = $from, $n = 0; $m <= $to && $n < count($parts); $m++, $n++)
+                    for ($m = $from, $n = 0; $m <= $to && $n < count($parts); $m++, $n++) {
                         $transformations[sprintf("%04X", $m)] = sprintf("%04X", hexdec($parts[$n]));
+                    }
                 }
             }
         }
@@ -521,8 +547,9 @@ class FileToText {
                         for ($k = 0; $k < count($hexs); $k++) {
 
                             $chex = str_pad($hexs[$k], 4, "0"); // Add tailing zero
-                            if (isset($transformations[$chex]))
+                            if (isset($transformations[$chex])) {
                                 $chex = $transformations[$chex];
+                            }
                             $document .= html_entity_decode("&#x".$chex.";");
                         }
                         $isHex = false;
@@ -538,13 +565,19 @@ class FileToText {
                         break;
                     case "\\":
                         $c2 = $texts[$i][$j + 1];
-                        if (in_array($c2, array("\\", "(", ")"))) $plain .= $c2;
-                        elseif ($c2 == "n") $plain .= '\n';
-                        elseif ($c2 == "r") $plain .= '\r';
-                        elseif ($c2 == "t") $plain .= '\t';
-                        elseif ($c2 == "b") $plain .= '\b';
-                        elseif ($c2 == "f") $plain .= '\f';
-                        elseif ($c2 >= '0' && $c2 <= '9') {
+                        if (in_array($c2, array("\\", "(", ")"))) {
+                            $plain .= $c2;
+                        } elseif ($c2 == "n") {
+                            $plain .= '\n';
+                        } elseif ($c2 == "r") {
+                            $plain .= '\r';
+                        } elseif ($c2 == "t") {
+                            $plain .= '\t';
+                        } elseif ($c2 == "b") {
+                            $plain .= '\b';
+                        } elseif ($c2 == "f") {
+                            $plain .= '\f';
+                        } elseif ($c2 >= '0' && $c2 <= '9') {
                             $oct = preg_replace("#[^0-9]#", "", substr($texts[$i], $j + 1, 3));
                             $j += strlen($oct) - 1;
                             $plain .= html_entity_decode("&#".octdec($oct).";", $this->convertquotes);
@@ -553,10 +586,11 @@ class FileToText {
                         break;
 
                     default:
-                        if ($isHex)
+                        if ($isHex) {
                             $hex .= $c;
-                        elseif ($isPlain)
+                        } elseif ($isPlain) {
                             $plain .= $c;
+                        }
                         break;
                 }
             }

@@ -1,4 +1,5 @@
 <?php
+
 namespace Void;
 
 class Semaphore
@@ -8,7 +9,9 @@ class Semaphore
 
     public function __construct($total = null)
     {
-        if(!is_null($total)) $this->setTotal($total);
+        if(!is_null($total)) {
+            $this->setTotal($total);
+        }
     }
 
     public function setTotal($num)
@@ -34,7 +37,9 @@ class Semaphore
     public function checkin()
     {
         $this->count++;
-        if($this->count > $this->total) $this->count = $this->total;
+        if($this->count > $this->total) {
+            $this->count = $this->total;
+        }
         return $this;
     }
 }

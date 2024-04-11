@@ -1,5 +1,7 @@
 <?php
+
 namespace Void;
+
 /**
 * Based on https://gist.github.com/tovic/d7b310dea3b33e4732c0
 */
@@ -14,21 +16,24 @@ namespace Void;
 *
 * -------------------------------------------------------
 */
-class Minify {
-    const X = "\x1A"; // a placeholder character
+class Minify
+{
+    public const X = "\x1A"; // a placeholder character
 
-    const SS = '"(?:[^"\\\]++|\\\.)*+"|\'(?:[^\'\\\\]++|\\\.)*+\'';
-    const CC = '\/\*[\s\S]*?\*\/';
-    const CH = '<\!--[\s\S]*?-->';
+    public const SS = '"(?:[^"\\\]++|\\\.)*+"|\'(?:[^\'\\\\]++|\\\.)*+\'';
+    public const CC = '\/\*[\s\S]*?\*\/';
+    public const CH = '<\!--[\s\S]*?-->';
 
     public function __invoke($input)
     {
         return self::html($input);
     }
 
-    static public function html($input)
+    public static function html($input)
     {
-        if( ! $input = trim($input)) return $input;
+        if(! $input = trim($input)) {
+            return $input;
+        }
 
         // Keep important white-space(s) after self-closing HTML tag(s)
         $input = preg_replace('#(<(?:img|input)(?:\s[^<>]*?)?\s*\/?>)\s+#i', '$1' . self::X . '\s', $input);
@@ -36,11 +41,15 @@ class Minify {
         $input = preg_split('#(' . self::CH . '|<pre(?:>|\s[^<>]*?>)[\s\S]*?<\/pre>|<code(?:>|\s[^<>]*?>)[\s\S]*?<\/code>|<script(?:>|\s[^<>]*?>)[\s\S]*?<\/script>|<style(?:>|\s[^<>]*?>)[\s\S]*?<\/style>|<textarea(?:>|\s[^<>]*?>)[\s\S]*?<\/textarea>|<[^<>]+?>)#i', $input, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
         $output = "";
         foreach($input as $v) {
-            if($v !== ' ' && trim($v) === "") continue;
+            if($v !== ' ' && trim($v) === "") {
+                continue;
+            }
             if($v[0] === '<' && substr($v, -1) === '>') {
                 if($v[1] === '!' && strpos($v, '<!--') === 0) { // HTML comment ...
                     // Remove if not detected as IE comment(s) ...
-                    if(substr($v, -12) !== '<![endif]-->') continue;
+                    if(substr($v, -12) !== '<![endif]-->') {
+                        continue;
+                    }
                     $output .= $v;
                 } else {
                     $output .= self::_minify_x(self::_minify_html($v));
@@ -75,23 +84,29 @@ class Minify {
         return preg_replace('#<(code|pre|script|style)(>|\s[^<>]*?>)\s*([\s\S]*?)\s*<\/\1>#i', '<$1$2$3</$1>', $output);
     }
 
-    static public function css($input)
+    public static function css($input)
     {
-        if( ! $input = trim($input)) return $input;
+        if(! $input = trim($input)) {
+            return $input;
+        }
         // Keep important white-space(s) between comment(s)
         $input = preg_replace('#(' . self::CC . ')\s+(' . self::CC . ')#', '$1' . self::X . '\s$2', $input);
         // Create chunk(s) of string(s), comment(s) and text
         $input = preg_split('#(' . self::SS . '|' . self::CC . ')#', $input, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
         $output = "";
         foreach($input as $v) {
-            if(trim($v) === "") continue;
+            if(trim($v) === "") {
+                continue;
+            }
             if(
                 ($v[0] === '"' && substr($v, -1) === '"') ||
                 ($v[0] === "'" && substr($v, -1) === "'") ||
                 (strpos($v, '/*') === 0 && substr($v, -2) === '*/')
             ) {
                 // Remove if not detected as important comment ...
-                if($v[0] === '/' && strpos($v, '/*!') !== 0) continue;
+                if($v[0] === '/' && strpos($v, '/*!') !== 0) {
+                    continue;
+                }
                 $output .= $v; // String or comment ...
             } else {
                 $output .= self::_minify_css($v);
@@ -112,21 +127,27 @@ class Minify {
         return self::_minify_v($output);
     }
 
-    static public function js($input)
+    public static function js($input)
     {
-        if( ! $input = trim($input)) return $input;
+        if(! $input = trim($input)) {
+            return $input;
+        }
         // Create chunk(s) of string(s), comment(s), regex(es) and text
         $input = preg_split('#(' . self::SS . '|' . self::CC . '|\/[^\n]+?\/(?=[.,;]|[gimuy]|$))#', $input, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
         $output = "";
         foreach($input as $v) {
-            if(trim($v) === "") continue;
+            if(trim($v) === "") {
+                continue;
+            }
             if(
                 ($v[0] === '"' && substr($v, -1) === '"') ||
                 ($v[0] === "'" && substr($v, -1) === "'") ||
                 ($v[0] === '/' && substr($v, -1) === '/')
             ) {
                 // Remove if not detected as important comment ...
-                if(strpos($v, '//') === 0 || (strpos($v, '/*') === 0 && strpos($v, '/*!') !== 0 && strpos($v, '/*@cc_on') !== 0)) continue;
+                if(strpos($v, '//') === 0 || (strpos($v, '/*') === 0 && strpos($v, '/*!') !== 0 && strpos($v, '/*@cc_on') !== 0)) {
+                    continue;
+                }
                 $output .= $v; // String, comment or regex ...
             } else {
                 $output .= self::_minify_js($v);
@@ -149,25 +170,28 @@ class Minify {
         );
     }
 
-    static protected function _minify_x($input)
+    protected static function _minify_x($input)
     {
         return str_replace(array("\n", "\t", ' '), array(self::X . '\n', self::X . '\t', self::X . '\s'), $input);
     }
 
-    static protected function _minify_v($input)
+    protected static function _minify_v($input)
     {
         return str_replace(array(self::X . '\n', self::X . '\t', self::X . '\s'), array("\n", "\t", ' '), $input);
     }
 
-    static protected function _minify_html($input)
+    protected static function _minify_html($input)
     {
-        return preg_replace_callback('#<\s*([^\/\s]+)\s*(?:>|(\s[^<>]+?)\s*>)#', function($m) {
+        return preg_replace_callback('#<\s*([^\/\s]+)\s*(?:>|(\s[^<>]+?)\s*>)#', function ($m) {
             if(isset($m[2])) {
                 // Minify inline CSS declaration(s)
                 if(stripos($m[2], ' style=') !== false) {
-                    $m[2] = preg_replace_callback('#( style=)([\'"]?)(.*?)\2#i', function($m) {
-                        return $m[1] . $m[2] . call_user_func(array(__CLASS__, 'css'), $m[3]) . $m[2];
-                        }, $m[2]
+                    $m[2] = preg_replace_callback(
+                        '#( style=)([\'"]?)(.*?)\2#i',
+                        function ($m) {
+                            return $m[1] . $m[2] . call_user_func(array(__CLASS__, 'css'), $m[3]) . $m[2];
+                        },
+                        $m[2]
                     );
                 }
                 return '<' . $m[1] . preg_replace(
@@ -191,16 +215,19 @@ class Minify {
                 ) . '>';
             }
             return '<' . $m[1] . '>';
-            }, $input);
+        }, $input);
     }
 
-    static protected function _minify_css($input)
+    protected static function _minify_css($input)
     {
         // Keep important white-space(s) in `calc()`
         if(stripos($input, 'calc(') !== false) {
-            $input = preg_replace_callback('#\b(calc\()\s*(.*?)\s*\)#i', function($m) {
+            $input = preg_replace_callback(
+                '#\b(calc\()\s*(.*?)\s*\)#i',
+                function ($m) {
                     return $m[1] . preg_replace('#\s+#', self::X . '\s', $m[2]) . ')';
-                }, $input
+                },
+                $input
             );
         }
         // Minify ...
@@ -261,7 +288,7 @@ class Minify {
         );
     }
 
-    static protected function _minify_js($input)
+    protected static function _minify_js($input)
     {
         return preg_replace(
             array(

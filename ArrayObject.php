@@ -1,4 +1,5 @@
 <?php
+
 namespace Void;
 
 class ArrayObject extends \ArrayObject
@@ -12,7 +13,7 @@ class ArrayObject extends \ArrayObject
     */
     public function merge(array $array, $overwrite = true)
     {
-        foreach($array as $key=>$val) {
+        foreach($array as $key => $val) {
             if(!isset($this[$key]) || (isset($this[$key]) && $overwrite)) {
                 $this[$key] = $val;
             }

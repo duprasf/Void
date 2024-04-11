@@ -1,4 +1,5 @@
 <?php
+
 namespace Void;
 
 use Void\WebsocketServer\Client;
@@ -41,7 +42,12 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
 
 
     protected $eventManager;
-    public function setEventManager(EventManagerInterface $eventManager){$eventManager->setIdentifiers(array(__CLASS__,get_called_class(),));$this->eventManager = $eventManager;return $this;}
+    public function setEventManager(EventManagerInterface $eventManager)
+    {
+        $eventManager->setIdentifiers(array(__CLASS__,get_called_class(),));
+        $this->eventManager = $eventManager;
+        return $this;
+    }
     public function getEventManager()
     {
         if (null === $this->eventManager && class_exists('EventManager')) {
@@ -49,7 +55,7 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
         }
         return $this->eventManager;
     }
-    protected function trigger($name, $obj=null, $param=array())
+    protected function trigger($name, $obj = null, $param = array())
     {
         if($em = $this->getEventManager()) {
             if($obj == null) {
@@ -72,10 +78,10 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
     protected $maxConnectionsPerIp = 50;
     protected $maxRequestsPerMinute = 70;
 
-    const STATUS_SERVER_CREATED = 1;
-    const STATUS_LIMIT_REACHED = 2;
-    const STATUS_LIMIT_REACHED_IP = 4;
-    const STATUS_UNKNOW_CONNECTION = 8;
+    public const STATUS_SERVER_CREATED = 1;
+    public const STATUS_LIMIT_REACHED = 2;
+    public const STATUS_LIMIT_REACHED_IP = 4;
+    public const STATUS_UNKNOW_CONNECTION = 8;
 
     /**
     * Create a new WebSocket. By default this is inactive and needs to ->run()
@@ -86,21 +92,20 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
     * @param int max number of user that can connect to the server at once
     * @return WebSocketServer
     */
-    public function create($host, $port=null, $certData=null, $maxUsers=100)
+    public function create($host, $port = null, $certData = null, $maxUsers = 100)
     {
         if(is_array($host)) {
             $params = $host;
-        }
-        else {
+        } else {
             $params = compact('host', 'port', 'certData', 'maxUsers');
         }
         $this->trigger(__FUNCTION__, $this, $params);
 
         parent::create($params['host'], $params['port'], $params['certData']);
         $this->status(array(
-            'code'=>self::STATUS_SERVER_CREATED,
-            'message'=>'Server created ('.$params['host'].':'.$params['port'].')',
-            'params'=>$params,
+            'code' => self::STATUS_SERVER_CREATED,
+            'message' => 'Server created ('.$params['host'].':'.$params['port'].')',
+            'params' => $params,
         ));
 
         $this->trigger(__FUNCTION__.'.post', $this, $params);
@@ -126,50 +131,43 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
     {
         $this->trigger(__FUNCTION__, $this);
 
-        while(true)
-        {
+        while(true) {
             $changed_sockets = $this->allsockets;
             $write = null;
             $except = null;
             $num_changed_streams = @stream_select($changed_sockets, $write, $except, 0, 5000);
             if($num_changed_streams === false) {
                 /* Error handling */
-            }
-            else if($num_changed_streams > 0) {
-                foreach($changed_sockets as $socket)
-                {
-                    if($socket == $this->master)
-                    {
+            } elseif($num_changed_streams > 0) {
+                foreach($changed_sockets as $socket) {
+                    if($socket == $this->master) {
                         // new connection
                         $ressource = @stream_socket_accept($this->master);
-                        if($ressource === false)
-                        {
+                        if($ressource === false) {
                             $errMsg = socket_strerror(socket_last_error());
                             if($errMsg != 'Success') {
                                 $this->log('Socket error: ' . $errMsg);
                             }
                             continue;
-                        }
-                        else
-                        {
+                        } else {
                             $client = $this->createClientConnection($ressource);
                             $this->clients[(int)$ressource] = $client;
                             $this->allsockets[] = $ressource;
 
-                            if(count($this->clients) > $this->maxClients)
-                            {
+                            if(count($this->clients) > $this->maxClients) {
                                 // this event can be used to send a message to the client
                                 $this->trigger('clientLimitReached', $this, compact('client'));
 
                                 $this->status(
                                     array(
-                                        'code'=>self::STATUS_LIMIT_REACHED,
-                                        'message'=>'Client Limit Reached ('.$this->maxClients.')!',
-                                        'params'=>array(
-                                            'client'=>$client,
-                                            'maxClients'=>$this->maxClients,
+                                        'code' => self::STATUS_LIMIT_REACHED,
+                                        'message' => 'Client Limit Reached ('.$this->maxClients.')!',
+                                        'params' => array(
+                                            'client' => $client,
+                                            'maxClients' => $this->maxClients,
                                         ),
-                                    ), 'warning'
+                                    ),
+                                    'warning'
                                 );
 
                                 $client->onDisconnect();
@@ -178,32 +176,29 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
                             }
 
                             $this->addIpToStorage($client->getClientIp());
-                            if($this->checkMaxConnectionsPerIp($client->getClientIp()) === false)
-                            {
+                            if($this->checkMaxConnectionsPerIp($client->getClientIp()) === false) {
                                 $client->onDisconnect();
                                 $this->status(
                                     array(
-                                        'code'=>self::STATUS_LIMIT_REACHED_IP,
-                                        'message'=>'Connection limit for ip ' . $client->getClientIp() . ' was reached ('.$this->maxConnectionsPerIp.')!',
-                                        'params'=>array(
-                                            'client'=>$client,
-                                            'maxConnectionsPerIp'=>$this->maxConnectionsPerIp,
+                                        'code' => self::STATUS_LIMIT_REACHED_IP,
+                                        'message' => 'Connection limit for ip ' . $client->getClientIp() . ' was reached ('.$this->maxConnectionsPerIp.')!',
+                                        'params' => array(
+                                            'client' => $client,
+                                            'maxConnectionsPerIp' => $this->maxConnectionsPerIp,
                                         ),
-                                    ), 'warning'
+                                    ),
+                                    'warning'
                                 );
                                 continue;
                             }
                         }
-                    }
-                    else
-                    {
+                    } else {
                         $client = isset($this->clients[(int)$socket]) ? $this->clients[(int)$socket] : null;
-                        if(!$client instanceOf Client)
-                        {
+                        if(!$client instanceof Client) {
                             $this->status(array(
-                                'code'=>self::STATUS_UNKNOW_CONNECTION,
-                                'message'=>'Unknown connection... client does not exists',
-                                'params'=>array(
+                                'code' => self::STATUS_UNKNOW_CONNECTION,
+                                'message' => 'Unknown connection... client does not exists',
+                                'params' => array(
                                 ),
                                 ), 'error');
                             if(isset($this->clients[(int)$socket])) {
@@ -214,34 +209,26 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
                         $data = $this->readBuffer($socket);
                         $bytes = strlen($data);
 
-                        if($bytes === 0)
-                        {
+                        if($bytes === 0) {
                             $client->onDisconnect();
                             continue;
-                        }
-                        elseif($data === false)
-                        {
+                        } elseif($data === false) {
                             $this->removeClientOnError($client);
                             continue;
-                        }
-                        elseif($client->waitingForData === false && $this->checkRequestLimit($client->getClientId()) === false)
-                        {
+                        } elseif($client->waitingForData === false && $this->checkRequestLimit($client->getClientId()) === false) {
                             $client->onDisconnect();
-                        }
-                        elseif(!$client->handshaked) {
+                        } elseif(!$client->handshaked) {
                             $client->handshake($data);
                             $this->onOpen($client);
                             $this->trigger('open', $this, compact('client'));
-                        }
-                        else {
+                        } else {
                             $decodedData = $client->handle($data);
                             // this is sent during reload of page
                             if($decodedData['type'] == 'close') {
                                 $client->onDisconnect();
-                            }
-                            else {
+                            } else {
                                 $this->onMessage($client, $decodedData['payload']);
-                                $this->trigger('message', $this, array('client'=>$client, 'data'=>$decodedData['payload']));
+                                $this->trigger('message', $this, array('client' => $client, 'data' => $decodedData['payload']));
                             }
                         }
                     }
@@ -279,10 +266,10 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
     public function status($data, $type = 'status')
     {
         if(!is_array($data)) {
-            $data = array('code'=>0, 'message'=>$data);
+            $data = array('code' => 0, 'message' => $data);
         }
         if(!isset($data['code'])) {
-            $data['code']=0;
+            $data['code'] = 0;
         }
         if(!isset($data['message'])) {
             // if there is no message, there is no status to provide
@@ -310,8 +297,7 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
         $resource = $client->getClientSocket();
 
         $this->removeIpFromStorage($client->getClientIp());
-        if(isset($this->requestStorage[$clientId]))
-        {
+        if(isset($this->requestStorage[$clientId])) {
             unset($this->requestStorage[$clientId]);
         }
         unset($this->clients[(int)$resource]);
@@ -329,8 +315,7 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
     public function removeClientOnError($client)
     {
         // remove reference in clients app:
-        if($client->getClientApplication() !== false)
-        {
+        if($client->getClientApplication() !== false) {
             $client->getClientApplication()->onDisconnect($client);
         }
 
@@ -361,12 +346,9 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
     */
     private function addIpToStorage($ip)
     {
-        if(isset($this->ipStorage[$ip]))
-        {
+        if(isset($this->ipStorage[$ip])) {
             $this->ipStorage[$ip]++;
-        }
-        else
-        {
+        } else {
             $this->ipStorage[$ip] = 1;
         }
 
@@ -398,8 +380,7 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
     */
     private function checkMaxConnectionsPerIp($ip)
     {
-        if($ip && !isset($this->ipStorage[$ip]))
-        {
+        if($ip && !isset($this->ipStorage[$ip])) {
             return true;
         }
         return $ip && ($this->ipStorage[$ip] > $this->maxConnectionsPerIp) ? false : true;
@@ -418,8 +399,7 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
         // attacker to send 1 request wait 59 seconds and send 98 more at once
         // with a limit of 100/sec it would then allow another 99 request the
         // next second. But it is good enought
-        if(!isset($this->requestStorage[$clientId]) || time() - $this->requestStorage[$clientId]['firstRequest'] > 60)
-        {
+        if(!isset($this->requestStorage[$clientId]) || time() - $this->requestStorage[$clientId]['firstRequest'] > 60) {
             $this->requestStorage[$clientId] = array(
                 'firstRequest' => time(),
                 'totalRequests' => 0,
@@ -464,8 +444,7 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
         $domain = str_replace('http://', '', $domain);
         $domain = str_replace('www.', '', $domain);
         $domain = (strpos($domain, '/') !== false) ? substr($domain, 0, strpos($domain, '/')) : $domain;
-        if(!empty($domain))
-        {
+        if(!empty($domain)) {
             $this->allowedOrigins[$domain] = true;
         }
         return $this;
@@ -537,18 +516,17 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
     */
     public function send($client, $data)
     {
-        if(!$client instanceOf Client) {
+        if(!$client instanceof Client) {
             $client = isset($this->clients[(int)$client]) ? $this->clients[(int)$client] : null;
         }
-        if($client instanceOf Client) {
+        if($client instanceof Client) {
             // Trying to json_encode an already json_encoded string
             // create bad results so check to see if it's already a
             // string before encoding it.
             if(!is_string($data)) {
                 try {
                     $data = json_encode($data);
-                }
-                catch(\Exception $e) {
+                } catch(\Exception $e) {
                     $data = null;
                 }
             }
@@ -566,7 +544,7 @@ class WebsocketServer extends Socket implements EventManagerAwareInterface, Logg
     * @param mixed $data if not string, json_encode is called
     * @return WebsocketServer
     */
-    public function sendAll($data, $except=array())
+    public function sendAll($data, $except = array())
     {
         if(!is_array($except)) {
             $except = array($except);

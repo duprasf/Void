@@ -1,8 +1,10 @@
 <?php
+
 namespace Void;
 
-class Regexp {
-    static public function isValid(string $pattern)
+class Regexp
+{
+    public static function isValid(string $pattern)
     {
         set_exception_handler('exception_handler_temp_');
         $old_error_handler = set_error_handler('error_handler_temp_');
@@ -31,13 +33,13 @@ function error_handler_temp_(
     string $errfile = '',
     int $errline = '',
     array $errcontext = ''
-)
-{
+) {
     return null;
 }
 /**
 * Temporary function to set as exception handler
 */
-function exception_handler_temp_($exception) {
+function exception_handler_temp_($exception)
+{
     return null;
 }

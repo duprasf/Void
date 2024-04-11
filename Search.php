@@ -1,12 +1,13 @@
 <?php
+
 namespace Void;
 
 class Search
 {
-    const DEFAULT_FILTER = Search\Filters::NON_BINARY;
-    const OPERATION_SEARCH = 1;
-    const OPERATION_REPLACE = 2;
-    const OPERATION_SEARCH_UTF8 = 3;
+    public const DEFAULT_FILTER = Search\Filters::NON_BINARY;
+    public const OPERATION_SEARCH = 1;
+    public const OPERATION_REPLACE = 2;
+    public const OPERATION_SEARCH_UTF8 = 3;
     public $filters = null;
     protected $_iterator = null;
     protected $_options = array();
@@ -15,10 +16,10 @@ class Search
     protected $_directoryException = array();
     protected $_isBasicSearch = false;
 
-    static private $_validPattern = true;
-    static private $_errorMessage = "";
+    private static $_validPattern = true;
+    private static $_errorMessage = "";
 
-    public function __construct($path="")
+    public function __construct($path = "")
     {
         $this->filters = new Search\Filters(self::DEFAULT_FILTER);
         if(is_string($path) && $path != "") {
@@ -32,21 +33,30 @@ class Search
     */
     public function setFilters(Search\Filters $filters)
     {
-        $this->filters = $filters; return $this;
+        $this->filters = $filters;
+        return $this;
     }
 
     public function __get($name)
     {
         $return = null;
         switch($name) {
-            case "options": $return = $this->_options; break;
-            case "iterator": $return = $this->_iterator; break;
-            case "path": $return = $this->_path; break;
-            case "searchTerm": $return = $this->_searchTerm; break;
-            case "directoryException": $return = $this->_directoryException; break;
-            case 'isBasicSearch': $return = $this->_isBasicSearch; break;
+            case "options": $return = $this->_options;
+                break;
+            case "iterator": $return = $this->_iterator;
+                break;
+            case "path": $return = $this->_path;
+                break;
+            case "searchTerm": $return = $this->_searchTerm;
+                break;
+            case "directoryException": $return = $this->_directoryException;
+                break;
+            case 'isBasicSearch': $return = $this->_isBasicSearch;
+                break;
             default:
-                if(isset($this->options[$name])) $return = $this->options[$name];
+                if(isset($this->options[$name])) {
+                    $return = $this->options[$name];
+                }
                 break;
         }
         return $return;
@@ -58,17 +68,18 @@ class Search
             case "filterName":
                 $this->filters->addFilters($value);
                 break;
-            case "path": $this->setPath($value); break;
+            case "path": $this->setPath($value);
+                break;
             case "searchTerm":
-                if(!is_null($value) && !is_string($value))
+                if(!is_null($value) && !is_string($value)) {
                     throw new Exception("Search term needs to be string");
+                }
                 $this->_searchTerm = $value;
                 break;
             case "directoryException":
                 if(is_string($value)) {
                     $this->_directoryException[] = $value;
-                }
-                else if(is_array($value)) {
+                } elseif(is_array($value)) {
                     $this->_directoryException = array_merge($this->_directoryException, $value);
                 }
                 break;
@@ -92,8 +103,10 @@ class Search
 
     public function setOptions($options)
     {
-        foreach($options as $key=>$option) {
-            if(isset($this->options[$key])) $this->options[$key] = $option;
+        foreach($options as $key => $option) {
+            if(isset($this->options[$key])) {
+                $this->options[$key] = $option;
+            }
         }
         return $this;
     }
@@ -101,32 +114,39 @@ class Search
     public function setPath($path)
     {
         $this->_path = realpath($path);
-        $this->_iterator = new \RecursiveIteratorIterator (new \RecursiveDirectoryIterator ($this->_path), \RecursiveIteratorIterator::SELF_FIRST);
+        $this->_iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->_path), \RecursiveIteratorIterator::SELF_FIRST);
         return $this;
     }
 
-    public function __invoke($searchTerm=null, $options=array())
+    public function __invoke($searchTerm = null, $options = array())
     {
         return $this->search($searchTerm, $options);
     }
 
-    public function basicSearch($searchTerm = null, $options=array())
+    public function basicSearch($searchTerm = null, $options = array())
     {
         $this->isBasicSearch = true;
         return $this->search($searchTerm, $options);
     }
 
-    public function search($searchTerm = null, $options=array())
+    public function search($searchTerm = null, $options = array())
     {
-        if(!$this->filters instanceof Search\Filters) throw new \Exception("What have you done with the filters");
+        if(!$this->filters instanceof Search\Filters) {
+            throw new \Exception("What have you done with the filters");
+        }
         if(is_array($options)) {
             $this->setOptions($options);
         }
         if(is_string($options) && $options != "") {
-            if($this->filters->filterExists($options)) $this->filters->addFilter($options);
-            else $this->setPath($options);
+            if($this->filters->filterExists($options)) {
+                $this->filters->addFilter($options);
+            } else {
+                $this->setPath($options);
+            }
         }
-        if($this->iterator == null) throw new Exception("Please set a path before starting a search!");
+        if($this->iterator == null) {
+            throw new Exception("Please set a path before starting a search!");
+        }
 
 
         $this->searchTerm = $searchTerm;
@@ -142,58 +162,60 @@ class Search
         $results = new Search\Results($this, self::OPERATION_SEARCH);
         $finfo = new \finfo(FILEINFO_MIME_ENCODING);
         foreach ($this->iterator as $file) {
-            if (!$file->isFile()) continue;
-            if($this->isInException($file->getPathName())) continue;
+            if (!$file->isFile()) {
+                continue;
+            }
+            if($this->isInException($file->getPathName())) {
+                continue;
+            }
             if($filters($file->getPathName())) {
                 $content = file_get_contents($file->getPathName());
                 if(is_null($searchTerm)) {
-                    $results->addResult(array("filename"=>$file->getPathName(), "encoding"=>$finfo->file($file->getPathName()), "finds"=>array()));
-                }
-                else if($this->isBasicSearch) {
+                    $results->addResult(array("filename" => $file->getPathName(), "encoding" => $finfo->file($file->getPathName()), "finds" => array()));
+                } elseif($this->isBasicSearch) {
                     $start = strpos($content, $this->_searchTerm);
                     if($start !== false) {
-                        $context = substr($content, max(0, $start-40), strlen($this->_searchTerm)+80);
+                        $context = substr($content, max(0, $start - 40), strlen($this->_searchTerm) + 80);
                         if(strlen(htmlentities($context, null, "UTF-8")) == 0) {
-                            $context = substr($content, max(0, $start-40), strlen($this->_searchTerm)+81);
+                            $context = substr($content, max(0, $start - 40), strlen($this->_searchTerm) + 81);
                         }
                         if(strlen(htmlentities($context, null, "UTF-8")) == 0) {
-                            $context = substr($content, max(0, $start-39), strlen($this->_searchTerm)+81);
+                            $context = substr($content, max(0, $start - 39), strlen($this->_searchTerm) + 81);
                         }
-                        $finds[] = array("word"=>$this->_searchTerm, "context"=>$context);
-                        $results->addResult(array("filename"=>$file->getPathName(), "encoding"=>$finfo->file($file->getPathName()), "finds"=>$finds));
+                        $finds[] = array("word" => $this->_searchTerm, "context" => $context);
+                        $results->addResult(array("filename" => $file->getPathName(), "encoding" => $finfo->file($file->getPathName()), "finds" => $finds));
                     }
-                }
-                else if(preg_match_all($this->_searchTerm, $content, $out, PREG_OFFSET_CAPTURE)) {
+                } elseif(preg_match_all($this->_searchTerm, $content, $out, PREG_OFFSET_CAPTURE)) {
                     $out = $out[0];
                     $finds = array();
                     foreach($out as $cr) {
-                        $context = substr($content, max(0, $cr[1]-40), strlen($cr[0])+80);
+                        $context = substr($content, max(0, $cr[1] - 40), strlen($cr[0]) + 80);
                         if(strlen(htmlentities($context, null, "UTF-8")) == 0) {
-                            $context = substr($content, max(0, $cr[1]-40), strlen($cr[0])+81);
+                            $context = substr($content, max(0, $cr[1] - 40), strlen($cr[0]) + 81);
                         }
                         if(strlen(htmlentities($context, null, "UTF-8")) == 0) {
-                            $context = substr($content, max(0, $cr[1]-39), strlen($cr[0])+81);
+                            $context = substr($content, max(0, $cr[1] - 39), strlen($cr[0]) + 81);
                         }
-                        $finds[] = array("word"=>$cr[0], "context"=>$context);
+                        $finds[] = array("word" => $cr[0], "context" => $context);
                     }
-                    $results->addResult(array("filename"=>$file->getPathName(), "encoding"=>$finfo->file($file->getPathName()), "finds"=>$finds));
+                    $results->addResult(array("filename" => $file->getPathName(), "encoding" => $finfo->file($file->getPathName()), "finds" => $finds));
                 }
             }
         }
         return $results;
     }
 
-    public function replace($pattern, $replace, $options=false)
+    public function replace($pattern, $replace, $options = false)
     {
         $results = $this->search($pattern, $options);
         $results->operation = self::OPERATION_REPLACE;
         $results->replaceTerm = $replace;
 
-        foreach($results->results as $key=>$found) {
-            foreach($found["finds"] as $kFind=>$find) {
+        foreach($results->results as $key => $found) {
+            foreach($found["finds"] as $kFind => $find) {
                 if($newContent = preg_replace($this->_searchTerm, $replace, $find["context"])) {
-                    $results->results[$key]["finds"][$kFind]["originalContent"]=$find["context"];
-                    $results->results[$key]["finds"][$kFind]["newContent"]=$newContent;
+                    $results->results[$key]["finds"][$kFind]["originalContent"] = $find["context"];
+                    $results->results[$key]["finds"][$kFind]["newContent"] = $newContent;
                 }
             }
             if($options === true) {
@@ -214,7 +236,9 @@ class Search
     public function isInException($file)
     {
         foreach($this->directoryException as $exception) {
-            if(strpos(dirname($file), $exception) === 0) return true;
+            if(strpos(dirname($file), $exception) === 0) {
+                return true;
+            }
         }
         return false;
     }

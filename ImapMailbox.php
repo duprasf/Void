@@ -1,23 +1,25 @@
 <?php
+
 namespace Void;
 
 /**
 * Based on:
 * @see https://github.com/barbushin/php-imap
 */
-class ImapMailbox implements \Iterator, \Countable{
+class ImapMailbox implements \Iterator, \Countable
+{
     /**
     * $valid is for the iterator
     *
     * @var $valid bool
     */
-    private $valid=false;
+    private $valid = false;
     /**
     * Use to store data
     *
     * @var $mailIds array
     */
-    private $mailIds=array();
+    private $mailIds = array();
 
     protected $imapPath;
     protected $login;
@@ -28,21 +30,32 @@ class ImapMailbox implements \Iterator, \Countable{
 
     public function __construct($imapPath = null, $login = null, $password = null, $attachmentsDir = false, $serverEncoding = 'utf-8')
     {
-        if($imapPath) $this->connect($imapPath, $login, $password, $attachmentsDir, $serverEncoding);
+        if($imapPath) {
+            $this->connect($imapPath, $login, $password, $attachmentsDir, $serverEncoding);
+        }
     }
 
     public function connect($imapPath = null, $login = null, $password = null, $attachmentsDir = false, $serverEncoding = 'utf-8')
     {
-        if(!is_null($imapPath)) $this->imapPath = $imapPath;
-        if(!is_null($login)) $this->login = $login;
-        if(!is_null($password)) $this->password = $password;
-        if(!is_null($serverEncoding)) $this->serverEncoding = $serverEncoding;
+        if(!is_null($imapPath)) {
+            $this->imapPath = $imapPath;
+        }
+        if(!is_null($login)) {
+            $this->login = $login;
+        }
+        if(!is_null($password)) {
+            $this->password = $password;
+        }
+        if(!is_null($serverEncoding)) {
+            $this->serverEncoding = $serverEncoding;
+        }
         if($attachmentsDir && is_dir($attachmentsDir)) {
             $this->attachmentsDir = realpath($attachmentsDir);
-        }
-        elseif(is_null($this->attachmentsDir)) {
+        } elseif(is_null($this->attachmentsDir)) {
             $this->attachmentsDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . "imapAttachment";
-            if(!is_dir($this->attachmentsDir)) mkdir($this->attachmentsDir, 0775, true);
+            if(!is_dir($this->attachmentsDir)) {
+                mkdir($this->attachmentsDir, 0775, true);
+            }
         }
 
         if(is_null($this->imapPath)) {
@@ -200,8 +213,7 @@ class ImapMailbox implements \Iterator, \Countable{
 
         if(empty($struct->parts)) {
             $this->initMailPart($mail, $struct, 0);
-        }
-        else {
+        } else {
             foreach($struct->parts as $partNum => $partStruct) {
                 $this->initMailPart($mail, $partStruct, $partNum + 1);
             }
@@ -225,14 +237,11 @@ class ImapMailbox implements \Iterator, \Countable{
 
         if($partStruct->encoding == 1) {
             $data = $this->imap_utf8($data);
-        }
-        elseif($partStruct->encoding == 2) {
+        } elseif($partStruct->encoding == 2) {
             $data = $this->imap_binary($data);
-        }
-        elseif($partStruct->encoding == 3) {
+        } elseif($partStruct->encoding == 3) {
             $data = $this->imap_base64($data);
-        }
-        elseif($partStruct->encoding == 4) {
+        } elseif($partStruct->encoding == 4) {
             $data = $this->imap_qprint($data);
         }
 
@@ -257,8 +266,7 @@ class ImapMailbox implements \Iterator, \Countable{
             $attachmentId = $partStruct->ifid ? trim($partStruct->id, " <>") : null;
             if(empty($params['filename']) && empty($params['name']) && $attachmentId) {
                 $filename = $attachmentId . '.' . strtolower($partStruct->subtype);
-            }
-            elseif(!empty($params['filename']) || !empty($params['name'])) {
+            } elseif(!empty($params['filename']) || !empty($params['name'])) {
                 $filename = !empty($params['filename']) ? $params['filename'] : $params['name'];
                 $filename = $this->decodeMimeStr($filename);
                 $filename = $this->quoteAttachmentFilename($filename);
@@ -266,12 +274,13 @@ class ImapMailbox implements \Iterator, \Countable{
             if($filename) {
                 if($this->attachmentsDir) {
                     $filepath = rtrim($this->attachmentsDir, '/\\') . DIRECTORY_SEPARATOR . $mail->id . DIRECTORY_SEPARATOR . $filename;
-                    if(!is_dir(dirname($filepath))) mkdir(dirname($filepath), 0775, true);
+                    if(!is_dir(dirname($filepath))) {
+                        mkdir(dirname($filepath), 0775, true);
+                    }
                     file_put_contents($filepath, $data);
                     chmod($filepath, 0664);
                     $mail->attachments[$filename] = $filepath;
-                }
-                else {
+                } else {
                     $mail->attachments[$filename] = $filename;
                 }
                 if($attachmentId) {
@@ -282,12 +291,10 @@ class ImapMailbox implements \Iterator, \Countable{
         if($partStruct->type == 0 && $data) {
             if(strtolower($partStruct->subtype) == 'plain') {
                 $mail->textPlain .= $data;
-            }
-            else {
+            } else {
                 $mail->textHtml .= $data;
             }
-        }
-        elseif($partStruct->type == 2 && $data) {
+        } elseif($partStruct->type == 2 && $data) {
             $mail->textPlain .= trim($data);
         }
         if(!empty($partStruct->parts)) {
@@ -344,15 +351,33 @@ class ImapMailbox implements \Iterator, \Countable{
     /**
     * Implementation of the Iterator interface
     */
-    public function rewind() {
+    public function rewind()
+    {
         $this->mailIds = $this->searchMails();
         $this->valid = (false !== reset($this->mailIds));
     }
-    public function current(){ return $this->getMailInfo(current($this->mailIds)); }
-    public function key()	{ return key($this->mailIds); }
-    public function next()	{ $this->valid = (false !== next($this->mailIds)); }
-    public function valid()	{ return $this->valid; }
+    public function current()
+    {
+        return $this->getMailInfo(current($this->mailIds));
+    }
+    public function key()
+    {
+        return key($this->mailIds);
+    }
+    public function next()
+    {
+        $this->valid = (false !== next($this->mailIds));
+    }
+    public function valid()
+    {
+        return $this->valid;
+    }
 
     /* Methods */
-    public function count()	{ if(is_null($this->mailIds)) $this->mailIds = $this->searchMails(); return count($this->mailIds); }
+    public function count()
+    {
+        if(is_null($this->mailIds)) {
+            $this->mailIds = $this->searchMails();
+        } return count($this->mailIds);
+    }
 }

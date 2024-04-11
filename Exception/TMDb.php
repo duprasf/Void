@@ -1,4 +1,5 @@
 <?php
+
 namespace Void\Exception;
 
 /**
@@ -7,4 +8,5 @@ namespace Void\Exception;
  * @author Jonas De Smet - Glamorous
  */
 class TMDb extends \Void\Exception
-{}
+{
+}

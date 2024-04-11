@@ -1,43 +1,44 @@
 <?php
+
 namespace Void;
 
-class Dice {
-    static public $lastResult;
-    static public $lastRoll;
-    static public $lastRollExpression;
-    static public $lastReplacement = [];
-    static public $reroll1onLastRoll = false;
+class Dice
+{
+    public static $lastResult;
+    public static $lastRoll;
+    public static $lastRollExpression;
+    public static $lastReplacement = [];
+    public static $reroll1onLastRoll = false;
 
-    static public function resetLastRoll()
+    public static function resetLastRoll()
     {
-        self::$lastRollExpression='';
-        self::$lastRoll=array();
-        self::$reroll1onLastRoll=false;
-        self::$lastResult=null;
+        self::$lastRollExpression = '';
+        self::$lastRoll = array();
+        self::$reroll1onLastRoll = false;
+        self::$lastResult = null;
     }
 
-    static public function getLastRollString($addDiceToDescription=false)
+    public static function getLastRollString($addDiceToDescription = false)
     {
         $returnString = str_replace(array("(", ")"), array('\(','\)'), self::$lastRollExpression);
         // replace dices in math expression ($param) with results of roll
 
         $placement = 0;
-        $returnString = preg_replace_callback('((\d*)d(\d+))i', function($matches) use (&$placement, $addDiceToDescription){
+        $returnString = preg_replace_callback('((\d*)d(\d+))i', function ($matches) use (&$placement, $addDiceToDescription) {
             $string = '';
-            $cr=self::$lastRoll[$placement++];
-                $string = '['.($addDiceToDescription ? $matches[0].' | ':'');
-                $eachDice = [];
-                foreach($cr['desc'] as $die) {
-                    $s = str_repeat('¹', $die['reroll1']);
-                    if(isset($die['removed'])) {
-                        $s.= "<del>{$die['value']}</del>";
-                    }
-                    else {
-                        $s.=$die['value'];
-                    }
-                    $eachDice[] = $s;
+            $cr = self::$lastRoll[$placement++];
+            $string = '['.($addDiceToDescription ? $matches[0].' | ' : '');
+            $eachDice = [];
+            foreach($cr['desc'] as $die) {
+                $s = str_repeat('¹', $die['reroll1']);
+                if(isset($die['removed'])) {
+                    $s .= "<del>{$die['value']}</del>";
+                } else {
+                    $s .= $die['value'];
                 }
-                $string.= implode(', ',$eachDice).']';
+                $eachDice[] = $s;
+            }
+            $string .= implode(', ', $eachDice).']';
 
             return $string;
         }, $returnString);
@@ -48,14 +49,14 @@ class Dice {
         return $returnString;
     }
 
-    static public function getLastRoll($addDiceToDescription=false)
+    public static function getLastRoll($addDiceToDescription = false)
     {
         return array(
-            "expression"=>preg_replace('(\(%([a-zA-Z0-9-]+)\))', '\1', self::$lastRollExpression),
-            "roll"=>self::$lastRoll,
-            "rollString"=>self::getLastRollString($addDiceToDescription),
-            "rerolled1"=>self::$reroll1onLastRoll,
-            "result"=>self::$lastResult,
+            "expression" => preg_replace('(\(%([a-zA-Z0-9-]+)\))', '\1', self::$lastRollExpression),
+            "roll" => self::$lastRoll,
+            "rollString" => self::getLastRollString($addDiceToDescription),
+            "rerolled1" => self::$reroll1onLastRoll,
+            "result" => self::$lastResult,
         );
     }
 
@@ -65,16 +66,23 @@ class Dice {
     * @param string|int|array $min This can be a number or a dice roll expression (if array, you must define a min and max key or it will take the first and last elements as min and max)
     * @param string|int $max
     */
-    static public function rand($min, $max=0)
+    public static function rand($min, $max = 0)
     {
         if(is_array($min)) {
             $max = isset($min['max']) ? $min['max'] : end($min);
             $min = isset($min['min']) ? $min['min'] : reset($min);
         }
-        if(is_string($min) && $min != intval($min)) $min = self::roll($min);
-        if(is_string($max) && $max != intval($max)) $max = self::roll($max);
+        if(is_string($min) && $min != intval($min)) {
+            $min = self::roll($min);
+        }
+        if(is_string($max) && $max != intval($max)) {
+            $max = self::roll($max);
+        }
         if(is_numeric($min) && is_numeric($max)) {
-            if($max < $min) {$max = $min; $min = 1;}
+            if($max < $min) {
+                $max = $min;
+                $min = 1;
+            }
             return random_int($min, $max);
         }
         return false;
@@ -87,7 +95,7 @@ class Dice {
     * @param bool $reroll1 if set to true, all rolled 1 will be rerolled.
     * @param bool $removeLowest if set to true one extra dice will be rolled per diceset and the lowest dice will be removed before returning the result.
     */
-    static public function roll($param, $reroll1 = false, $removeLowest = false, ...$replacement)
+    public static function roll($param, $reroll1 = false, $removeLowest = false, ...$replacement)
     {
         self::resetLastRoll();
         self::$lastRollExpression = $param;
@@ -95,21 +103,23 @@ class Dice {
 
         $param = str_replace(array("(", ")"), array('\(','\)'), $param);
         // replace dices in math expression ($param) with results of roll
-        $param = preg_replace_callback('((\d*)d(\d+))i', function($matches) use ($reroll1, $removeLowest) {
+        $param = preg_replace_callback('((\d*)d(\d+))i', function ($matches) use ($reroll1, $removeLowest) {
             $total = 0;
-            if(!is_numeric($matches[1])) $matches[1] = 1;
-            if($removeLowest) {
-                $matches[1]+=1;
+            if(!is_numeric($matches[1])) {
+                $matches[1] = 1;
             }
-            $rolls=array();
+            if($removeLowest) {
+                $matches[1] += 1;
+            }
+            $rolls = array();
             $rollDesc = array();
             for($i = 1; $i <= $matches[1]; $i++) {
                 $failsafe = 0;
                 do {
                     $val = random_int(1, $matches[2]);
                 } while($val == 1 && $reroll1 && $failsafe++ < 10000);
-                $rollDesc[] = array('value'=>$val, 'reroll1'=>$failsafe);
-                $rolls[]=$val;
+                $rollDesc[] = array('value' => $val, 'reroll1' => $failsafe);
+                $rolls[] = $val;
             }
             if($removeLowest) {
                 $removedPos = array_search(min($rolls), $rolls);
@@ -124,8 +134,8 @@ class Dice {
                 }
             }
 
-            $total+= array_sum($rolls);
-            self::$lastRoll[] = array('value'=>$total, 'desc'=>$rollDesc, 'rerolled1'=>self::$reroll1onLastRoll);
+            $total += array_sum($rolls);
+            self::$lastRoll[] = array('value' => $total, 'desc' => $rollDesc, 'rerolled1' => self::$reroll1onLastRoll);
             return $total;
         }, $param);
 
@@ -144,10 +154,10 @@ class Dice {
     * @param bool $reroll1 if set to true, all rolled 1 will be rerolled.
     * @param bool $removeLowest if set to true the lowest dice will be removed before returning the result.
     */
-    static public function max($param, $reroll1 = false, $removeLowest = false)
+    public static function max($param, $reroll1 = false, $removeLowest = false)
     {
         $param = str_replace(array("(", ")"), array('\(','\)'), $param);
-        $param = preg_replace_callback('((\d*)d(\d+))i', function($matches) use ($reroll1, $removeLowest) {
+        $param = preg_replace_callback('((\d*)d(\d+))i', function ($matches) use ($reroll1, $removeLowest) {
             if(!is_numeric($matches[1])) {
                 $matches[1] = 1;
             }
@@ -165,10 +175,10 @@ class Dice {
     * @param bool $reroll1 if set to true, all rolled 1 will be rerolled.
     * @param bool $removeLowest if set to true the lowest dice will be removed before returning the result.
     */
-    static public function min($param, $reroll1 = false, $removeLowest = false)
+    public static function min($param, $reroll1 = false, $removeLowest = false)
     {
         $param = str_replace(array("(", ")"), array('\(','\)'), $param);
-        $param = preg_replace_callback('((\d*)d(\d+))i', function($matches) use ($reroll1, $removeLowest) {
+        $param = preg_replace_callback('((\d*)d(\d+))i', function ($matches) use ($reroll1, $removeLowest) {
             if(!is_numeric($matches[1])) {
                 $matches[1] = 1;
             }

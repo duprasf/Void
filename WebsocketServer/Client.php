@@ -1,4 +1,5 @@
 <?php
+
 namespace Void\WebsocketServer;
 
 /**
@@ -39,7 +40,8 @@ class Client
     public function __get($name)
     {
         switch($name) {
-            case 'handshaked': return $this->handshaked; break;
+            case 'handshaked': return $this->handshaked;
+                break;
         }
 
         return null;
@@ -51,8 +53,7 @@ class Client
         $lines = preg_split("/\r\n/", $data);
 
         // check for valid http-header:
-        if(!preg_match('/\AGET (\S+) HTTP\/1.1\z/', $lines[0], $matches))
-        {
+        if(!preg_match('/\AGET (\S+) HTTP\/1.1\z/', $lines[0], $matches)) {
             $this->log('Invalid request: ' . $lines[0]);
             $this->sendHttpResponse(400);
             stream_socket_shutdown($this->socket, STREAM_SHUT_RDWR);
@@ -61,11 +62,9 @@ class Client
 
         // generate headers array:
         $headers = array();
-        foreach($lines as $line)
-        {
+        foreach($lines as $line) {
             $line = chop($line);
-            if(preg_match('/\A(\S+): (.*)\z/', $line, $matches))
-            {
+            if(preg_match('/\A(\S+): (.*)\z/', $line, $matches)) {
                 $headers[$matches[1]] = $matches[2];
             }
         }
@@ -121,14 +120,14 @@ class Client
         $secKey = isset($headers['Sec-WebSocket-Key']) ? $headers['Sec-WebSocket-Key'] : '';
         $secAccept = base64_encode(pack('H*', sha1($secKey . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')));
         $response = "HTTP/1.1 101 Switching Protocols\r\n";
-        $response.= "Upgrade: websocket\r\n";
-        $response.= "Connection: Upgrade\r\n";
-        $response.= "Sec-WebSocket-Accept: " . $secAccept . "\r\n";
+        $response .= "Upgrade: websocket\r\n";
+        $response .= "Connection: Upgrade\r\n";
+        $response .= "Sec-WebSocket-Accept: " . $secAccept . "\r\n";
 
         if(isset($headers['Sec-WebSocket-Protocol']) && !empty($headers['Sec-WebSocket-Protocol'])) {
-            $response.= "Sec-WebSocket-Protocol: " . substr($path, 1) . "\r\n";
+            $response .= "Sec-WebSocket-Protocol: " . substr($path, 1) . "\r\n";
         }
-        $response.= "\r\n";
+        $response .= "\r\n";
         if(false === ($this->server->writeBuffer($this->socket, $response))) {
             return false;
         }
@@ -141,27 +140,26 @@ class Client
     public function sendHttpResponse($httpStatusCode = 400)
     {
         $httpHeader = 'HTTP/1.1 ';
-        switch($httpStatusCode)
-        {
+        switch($httpStatusCode) {
             case 400:
                 $httpHeader .= '400 Bad Request';
-            break;
+                break;
 
             case 401:
                 $httpHeader .= '401 Unauthorized';
-            break;
+                break;
 
             case 403:
                 $httpHeader .= '403 Forbidden';
-            break;
+                break;
 
             case 404:
                 $httpHeader .= '404 Not Found';
-            break;
+                break;
 
             case 501:
                 $httpHeader .= '501 Not Implemented';
-            break;
+                break;
         }
         $httpHeader .= "\r\n";
         $this->server->writeBuffer($this->socket, $httpHeader);
@@ -181,8 +179,7 @@ class Client
             $this->waitingForData = true;
             $this->_dataBuffer .= $data;
             return false;
-        }
-        else {
+        } else {
             $this->_dataBuffer = '';
             $this->waitingForData = false;
         }
@@ -252,44 +249,41 @@ class Client
         $payload[0] = chr(bindec($payload[0]));
         $payload[1] = chr(bindec($payload[1]));
         $payload = implode('', $payload);
-        switch($statusCode)
-        {
+        switch($statusCode) {
             case 1000:
                 $payload .= 'normal closure';
-            break;
+                break;
 
             case 1001:
                 $payload .= 'going away';
-            break;
+                break;
 
             case 1002:
                 $payload .= 'protocol error';
-            break;
+                break;
 
             case 1003:
                 $payload .= 'unknown data (opcode)';
-            break;
+                break;
 
             case 1004:
                 $payload .= 'frame too large';
-            break;
+                break;
 
             case 1007:
                 $payload .= 'utf8 expected';
-            break;
+                break;
 
             case 1008:
                 $payload .= 'message violates server policy';
-            break;
+                break;
         }
 
-        if($this->send($payload, 'close', false) === false)
-        {
+        if($this->send($payload, 'close', false) === false) {
             return false;
         }
 
-        if($this->application)
-        {
+        if($this->application) {
             $this->application->onDisconnect($this);
         }
         stream_socket_shutdown($this->socket, STREAM_SHUT_RDWR);
@@ -311,52 +305,46 @@ class Client
         $frame = '';
         $payloadLength = strlen($payload);
 
-        switch($type)
-        {
+        switch($type) {
             case 'text':
                 // first byte indicates FIN, Text-Frame (10000001):
                 $frameHead[0] = 129;
-            break;
+                break;
 
             case 'close':
                 // first byte indicates FIN, Close Frame(10001000):
                 $frameHead[0] = 136;
-            break;
+                break;
 
             case 'ping':
                 // first byte indicates FIN, Ping frame (10001001):
                 $frameHead[0] = 137;
-            break;
+                break;
 
             case 'pong':
                 // first byte indicates FIN, Pong frame (10001010):
                 $frameHead[0] = 138;
-            break;
+                break;
         }
 
         // set mask and payload length (using 1, 3 or 9 bytes)
-        if($payloadLength > 65535)
-        {
+        if($payloadLength > 65535) {
             $payloadLengthBin = str_split(sprintf('%064b', $payloadLength), 8);
             $frameHead[1] = ($masked === true) ? 255 : 127;
-            for($i = 0; $i < 8; $i++)
-            {
-                $frameHead[$i+2] = bindec($payloadLengthBin[$i]);
+            for($i = 0; $i < 8; $i++) {
+                $frameHead[$i + 2] = bindec($payloadLengthBin[$i]);
             }
             // most significant bit MUST be 0 (close connection if frame too big)
-            if($frameHead[2] > 127)
-            {
+            if($frameHead[2] > 127) {
                 $this->close(1004);
                 return false;
             }
-        }
-        elseif($payloadLength > 125) {
+        } elseif($payloadLength > 125) {
             $payloadLengthBin = str_split(sprintf('%016b', $payloadLength), 8);
             $frameHead[1] = ($masked === true) ? 254 : 126;
             $frameHead[2] = bindec($payloadLengthBin[0]);
             $frameHead[3] = bindec($payloadLengthBin[1]);
-        }
-        else {
+        } else {
             $frameHead[1] = ($masked === true) ? $payloadLength + 128 : $payloadLength;
         }
         // convert frame-head to string:
@@ -396,62 +384,55 @@ class Client
         $payloadLength = ord($data[1]) & 127;
 
         // close connection if unmasked frame is received:
-        if($isMasked === false)
-        {
+        if($isMasked === false) {
             $this->close(1002);
         }
 
-        switch($opcode)
-        {
+        switch($opcode) {
             // text frame:
             case 1:
                 $decodedData['type'] = 'text';
-            break;
+                break;
 
             case 2:
                 $decodedData['type'] = 'binary';
-            break;
+                break;
 
-            // connection close frame:
+                // connection close frame:
             case 8:
                 $decodedData['type'] = 'close';
-            break;
+                break;
 
-            // ping frame:
+                // ping frame:
             case 9:
                 $decodedData['type'] = 'ping';
-            break;
+                break;
 
-            // pong frame:
+                // pong frame:
             case 10:
                 $decodedData['type'] = 'pong';
-            break;
+                break;
 
             default:
                 // Close connection on unknown opcode:
                 $this->close(1003);
-            break;
+                break;
         }
 
-        if($payloadLength === 126)
-        {
-           $mask = substr($data, 4, 4);
-           $payloadOffset = 8;
-           $dataLength = bindec(sprintf('%08b', ord($data[2])) . sprintf('%08b', ord($data[3]))) + $payloadOffset;
-        }
-        elseif($payloadLength === 127)
-        {
+        if($payloadLength === 126) {
+            $mask = substr($data, 4, 4);
+            $payloadOffset = 8;
+            $dataLength = bindec(sprintf('%08b', ord($data[2])) . sprintf('%08b', ord($data[3]))) + $payloadOffset;
+        } elseif($payloadLength === 127) {
             $mask = substr($data, 10, 4);
             $payloadOffset = 14;
             $tmp = '';
-            for($i = 0; $i < 8; $i++)
-            {
-                $tmp .= sprintf('%08b', ord($data[$i+2]));
+            for($i = 0; $i < 8; $i++) {
+                $tmp .= sprintf('%08b', ord($data[$i + 2]));
             }
             $dataLength = bindec($tmp) + $payloadOffset;
             unset($tmp);
-        }
-        else {
+        } else {
             $mask = substr($data, 2, 4);
             $payloadOffset = 6;
             $dataLength = $payloadLength + $payloadOffset;
@@ -474,8 +455,7 @@ class Client
                 }
             }
             $decodedData['payload'] = $unmaskedPayload;
-        }
-        else {
+        } else {
             $payloadOffset = $payloadOffset - 4;
             $decodedData['payload'] = substr($data, $payloadOffset);
         }

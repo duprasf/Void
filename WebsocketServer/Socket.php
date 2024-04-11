@@ -1,7 +1,8 @@
 <?php
+
 namespace Void\WebsocketServer;
 
-use \Void\Exception\Websocket as Exception;
+use Void\Exception\Websocket as Exception;
 
 /**
 * WebSockets server
@@ -27,17 +28,17 @@ class Socket
     protected $certPassphrase = null;
     protected $ssl = false;
 
-    public function setCertData($file, $privatekeyfile=null, $passphrase = null)
+    public function setCertData($file, $privatekeyfile = null, $passphrase = null)
     {
         if(file_exists($file)) {
-            $this->certData = array("file"=>$file, "privatekey"=>$privatekeyfile);
+            $this->certData = array("file" => $file, "privatekey" => $privatekeyfile);
             $this->certPassphrase = $passphrase;
             $this->ssl = true;
         }
         return $this;
     }
 
-    public function create($host, $port, $certData=null)
+    public function create($host, $port, $certData = null)
     {
         ob_implicit_flush(true);
         $this->ssl = false;
@@ -49,8 +50,7 @@ class Socket
                     isset($certData['passphrase']) ? $certData['passphrase'] : null
                 );
                 $this->ssl = true;
-            }
-            else if(is_string($certData)) {
+            } elseif(is_string($certData)) {
                 $this->setCertData($certData);
                 $this->ssl = true;
             }
@@ -74,7 +74,7 @@ class Socket
         }
 
         $errno = $err = null;
-        if(!$this->master = stream_socket_server($url, $errno, $err, STREAM_SERVER_BIND|STREAM_SERVER_LISTEN, $this->context)) {
+        if(!$this->master = stream_socket_server($url, $errno, $err, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, $this->context)) {
             throw new Exception('Error creating socket: ' . $err);
         }
 
@@ -127,7 +127,7 @@ class Socket
         $passphrase = $this->certPassphrase;
 
         if(is_string($certData)) {
-            $certData = array('file'=>$certData);
+            $certData = array('file' => $certData);
         }
 
         if(!file_exists($certData['file'])) {
@@ -159,8 +159,7 @@ class Socket
                 $buffer .= fread($resource, 8192);
             }
             return $buffer;
-        }
-        else {
+        } else {
             $buffer = '';
             $buffsize = 8192;
             $metadata['unread_bytes'] = 0;
@@ -189,8 +188,7 @@ class Socket
             $fwrite = @fwrite($resource, substr($string, $written));
             if($fwrite === false) {
                 return false;
-            }
-            elseif($fwrite === 0) {
+            } elseif($fwrite === 0) {
                 return false;
             }
         }

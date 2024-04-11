@@ -1,8 +1,9 @@
 <?php
+
 namespace Void;
 
-class ImapMail {
-
+class ImapMail
+{
     public $id;
     public $date;
     public $subject;
@@ -21,7 +22,8 @@ class ImapMail {
     public $attachments = array();
     public $attachmentsIds = array();
 
-    public function fetchMessageInternalLinks($baseUrl) {
+    public function fetchMessageInternalLinks($baseUrl)
+    {
         if($this->textHtml) {
             foreach($this->attachments as $filepath) {
                 $filename = basename($filepath);
@@ -33,7 +35,8 @@ class ImapMail {
         return $this;
     }
 
-    public function fetchMessageHtmlTags($stripTags = array('html', 'body', 'head', 'meta')) {
+    public function fetchMessageHtmlTags($stripTags = array('html', 'body', 'head', 'meta'))
+    {
         if($this->textHtml) {
             foreach($stripTags as $tag) {
                 $this->textHtml = preg_replace('/<\/?' . $tag . '.*?>/is', '', $this->textHtml);
@@ -43,7 +46,8 @@ class ImapMail {
         return $this;
     }
 
-    public function __toString() {
+    public function __toString()
+    {
         return $this->textHtml;
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace Void;
 
 class Crypt
@@ -34,8 +35,7 @@ class Crypt
 
         if (openssl_public_encrypt($data, $encrypted, $this->pubkey, OPENSSL_PKCS1_OAEP_PADDING)) {
             $data = base64_encode($encrypted);
-        }
-        else {
+        } else {
             throw new Exception\DataTooLargeException('Unable to encrypt data. Perhaps it is bigger than the key size?');
         }
 
@@ -112,8 +112,7 @@ class Crypt
             (file_exists($privateKeyPath) && !is_writable($privateKeyPath))
         ) {
             throw new \Exception('Cannot write public or private key');
-        }
-        else if(!is_writeable(dirname($publicKeyPath)) || !is_writable(dirname($privateKeyPath))) {
+        } elseif(!is_writeable(dirname($publicKeyPath)) || !is_writable(dirname($privateKeyPath))) {
             throw new \Exception('Cannot write in one of the folders for the public or private key');
         }
         $this->makeKey($dn, $pub, $priv);
