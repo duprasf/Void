@@ -83,7 +83,7 @@ class Dice
                 $max = $min;
                 $min = 1;
             }
-            return random_int($min, $max);
+            return random_int(intval($min), intval($max));
         }
         return false;
     }
