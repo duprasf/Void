@@ -27,11 +27,23 @@ class File
     }
 
     protected static $mimes;
+    protected static $mimesFlipped;
     public static function mimeToExtension($mimeType)
     {
         if(!self::$mimes) {
             self::$mimes = include(__DIR__.'/mimeToExtension.php');
         }
         return self::$mimes[$mimeType] ?? false;
+    }
+    public static function extensionToMime($ext)
+    {
+        if(!self::$mimesFlipped) {
+            if(self::$mimes) {
+                self::$mimesFlipped = array_flip(self::$mimes);
+            } else {
+                self::$mimesFlipped = array_flip(include(__DIR__.'/mimeToExtension.php'));
+            }
+        }
+        return self::$mimesFlipped[$ext] ?? false;
     }
 }
