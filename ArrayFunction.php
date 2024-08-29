@@ -125,4 +125,44 @@ class ArrayFunction
         }
         return $return;
     }
+
+    public static function explodeToMultidimensionArray(array $input): array
+    {
+        $output = [];
+        foreach($input as $key=>$val) {
+            if(strpos($key, '[') === false) {
+                $output[$key] = $val;
+                continue;
+            }
+            preg_match_all('(^(\w[\w\d_-]+?)\[(.+)\]$)s', $key, $matches, PREG_SET_ORDER);
+            $matches=$matches[0];
+
+            // Get the keys we want to assign
+            $keys = explode('][', $matches[2]);
+            try {
+                self::setInArray($output, $matches[1], $keys, $val);
+            } catch(\Throwable $e) {
+                var_dump($e->getMessage());
+                exit();
+            } catch(\Exception $e) {
+                var_dump($e->getMessage());
+                exit();
+            }
+        }
+
+        return $output;
+    }
+
+    static public function setInArray(&$arr, $firstKey, array $keys, $val)
+    {
+        $key = array_shift($keys);
+        if(count($keys) == 0) {
+            $arr[$firstKey][$key] = $val;
+            return $arr;
+        }
+        if(!isset($arr[$firstKey][$key])) {
+            $arr[$firstKey][$key]=[];
+        }
+        return self::setInArray($arr[$firstKey], $key, $keys, $val);
+    }
 }
