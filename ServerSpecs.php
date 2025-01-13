@@ -7,6 +7,11 @@ use ArrayAccess;
 
 class ServerSpecs implements ArrayAccess
 {
+    public const CPU=1;
+    public const RAM=2;
+    public const OS=4;
+    public const WEB=8;
+
     public function offsetExists(mixed $offset): bool
     {
         return in_array(strtolower($offset), ['cpu', 'cpus', 'ram', 'os', 'web']);
@@ -17,12 +22,16 @@ class ServerSpecs implements ArrayAccess
         switch($offset) {
             case 'cpu':
             case 'cpus':
+            case self::CPU:
                 return static::getCPUs();
             case 'ram':
+            case self::RAM:
                 return static::getRAM();
             case 'os':
+            case self::OS:
                 return static::getOS();
             case 'web':
+            case self::WEB:
                 return static::getWebServerVersions();
             default:
                 return false;
@@ -37,24 +46,66 @@ class ServerSpecs implements ArrayAccess
     {
     }
 
-    public function __invoke()
+    public function __invoke(array $params=[])
     {
-        return statis::get();
+        return statis::get($params);
     }
 
-    public static function get() : array
+    public static function get(int|array $params=[]) : array
     {
-        return array_merge(
-            self::getCPUs(),
-            self::getRAM(),
-            self::getOS(),
-            self::getWebServerVersions(),
-        );
+        if((!is_array($params) || count($params) == 0) || $params==0 || $params==-1) {
+            return array_merge(
+                self::getCPUs(),
+                self::getRAM(),
+                self::getOS(),
+                self::getWebServerVersions(),
+            );
+        }
+        if(is_array($params)) {
+            $info=[];
+            foreach($params as $p) {
+                switch($p) {
+                    case 'cpu':
+                    case 'cpus':
+                    case self::CPU:
+                        $info+=static::getCPUs();
+                        break;
+                    case 'ram':
+                    case self::RAM:
+                        $info+=static::getRAM();
+                        break;
+                    case 'os':
+                    case self::OS:
+                        $info+=static::getOS();
+                        break;
+                    case 'web':
+                    case self::WEB:
+                        $info+=static::getWebServerVersions();
+                        break;
+                }
+            }
+            return $info;
+        }
+
+        $info=[];
+        if($params & self::CPU) {
+            $info+=static::getCPUs();
+        }
+        if($params & self::RAM) {
+            $info+=static::getRAM();
+        }
+        if($params & self::OS) {
+            $info+=static::getOS();
+        }
+        if($params & self::WEB) {
+            $info+=static::getWebServerVersions();
+        }
+        return $info;
     }
 
     public static function getOS() : array
     {
-        preg_match('("([^\(]*))', `cat /etc/*-release | grep PRETTY_NAME`, $out);
+        preg_match('("([^\(]*)")', `cat /etc/*-release | grep PRETTY_NAME`, $out);
         return ['OS'=>trim($out[1])];
     }
 
