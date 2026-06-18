@@ -10,6 +10,16 @@ namespace Void;
 
 class ArrayFunction
 {
+    /**
+     * Recursively merges two arrays with distinct values
+     * 
+     * Unlike array_merge_recursive(), this method replaces values instead of creating
+     * nested arrays when the same key exists in both arrays.
+     *
+     * @param array $array1 The first array to merge
+     * @param array $array2 The second array to merge (takes precedence)
+     * @return array The merged array with distinct values
+     */
     public static function array_merge_recursive_distinct(array $array1, array $array2)
     {
         $merged = $array1;
@@ -23,6 +33,18 @@ class ArrayFunction
         return $merged;
     }
 
+    /**
+     * Selects random element(s) from an array based on weighted priority
+     * 
+     * Each element should have a priority/weight field. Elements with higher values
+     * have a greater chance of being selected. Falls back to 'popularity' field if
+     * 'priority' is not found.
+     *
+     * @param array $array The array to select from (elements should have weight field)
+     * @param int $number Number of elements to select (default: 1)
+     * @param string $fieldName Name of the weight field (default: 'priority')
+     * @return mixed|array Returns single key if $number=1, otherwise array of keys
+     */
     public static function randomByPriority($array, $number = 1, $fieldName = 'priority')
     {
         $selectedKey = $number > 1 ? [] : null;
@@ -56,11 +78,30 @@ class ArrayFunction
         return $selectedKey;
     }
 
+    /**
+     * Extracts values for a specific key from an array of arrays
+     * 
+     * Alias for array_column() method.
+     *
+     * @param array $array The array to extract values from
+     * @param string|array $key The key to extract values for
+     * @return array Array of values for the specified key
+     */
     public static function getValuesForKey($array, $key)
     {
         return self::array_column($array, $key);
     }
 
+    /**
+     * Returns the values from a single column in the input array
+     * 
+     * Polyfill for native array_column() function. Supports extracting multiple
+     * columns when $key is an array.
+     *
+     * @param array $array The input array (array of arrays)
+     * @param string|array $key Column key(s) to extract
+     * @return array Array of values from the specified column(s)
+     */
     public static function array_column($array, $key)
     {
         if(function_exists('array_column')) {
@@ -81,6 +122,21 @@ class ArrayFunction
         return $return;
     }
 
+    /**
+     * Converts an array to an HTML table
+     * 
+     * Supports various options for customizing the table output including caption,
+     * thead, CSS classes, and table ID.
+     *
+     * @param array $data The data to convert to table rows
+     * @param array $options Optional settings:
+     *                       - 'caption': Table caption text
+     *                       - 'thead': Array for table header
+     *                       - 'tableClass': CSS class for table element
+     *                       - 'tableId': ID attribute for table element
+     *                       - 'noTbodyTag': Skip tbody wrapper if true
+     * @return string HTML table markup
+     */
     public static function arrayToTable(array $data, array $options = array())
     {
         $table = '';
@@ -107,6 +163,17 @@ class ArrayFunction
         ;
     }
 
+    /**
+     * Converts an array to HTML table row(s)
+     * 
+     * Handles various array structures: flat arrays, nested arrays, and key-value pairs.
+     * Used internally by arrayToTable().
+     *
+     * @param array $data The data to convert to row(s)
+     * @param array $options Optional settings:
+     *                       - 'useKeyAsTh': Use array keys as th elements
+     * @return string HTML tr/td/th markup
+     */
     public static function arrayToTableRow(array $data, array $options = array())
     {
         if(isset($options['useKeyAsTh']) && $options['useKeyAsTh']) {
@@ -126,6 +193,15 @@ class ArrayFunction
         return $return;
     }
 
+    /**
+     * Converts flat array with bracket notation keys to multidimensional array
+     * 
+     * Transforms keys like 'field[subfield][index]' into nested array structure.
+     * Example: ['user[name]' => 'John'] becomes ['user' => ['name' => 'John']]
+     *
+     * @param array $input Flat array with bracket notation keys
+     * @return array Multidimensional array structure
+     */
     public static function explodeToMultidimensionArray(array $input): array
     {
         $output = [];
@@ -153,6 +229,18 @@ class ArrayFunction
         return $output;
     }
 
+    /**
+     * Recursively sets a value in a nested array structure
+     * 
+     * Used internally by explodeToMultidimensionArray() to build nested arrays.
+     * Creates intermediate arrays as needed.
+     *
+     * @param array $arr Reference to the array to modify
+     * @param string $firstKey The first level key
+     * @param array $keys Remaining keys for nested levels
+     * @param mixed $val The value to set
+     * @return array The modified array
+     */
     static public function setInArray(&$arr, $firstKey, array $keys, $val)
     {
         $key = array_shift($keys);
@@ -164,5 +252,118 @@ class ArrayFunction
             $arr[$firstKey][$key]=[];
         }
         return self::setInArray($arr[$firstKey], $key, $keys, $val);
+    }
+
+    /**
+     * Computes the recursive difference between two arrays
+     * 
+     * Returns elements from $array1 that are not present or differ in $array2.
+     * Uses hash optimization for fast comparison of large arrays and nested structures.
+     *
+     * @param array $array1 The array to compare from
+     * @param array $array2 The array to compare against
+     * @return array Elements from $array1 that differ from $array2
+     */
+    static public function arrayRecursiveDiff($array1, $array2)
+    {
+        // Quick hash comparison - if arrays are identical, return empty immediately
+        // For large arrays, this avoids deep traversal
+        $hash1 = self::fastHash($array1);
+        $hash2 = self::fastHash($array2);
+
+        if ($hash1 === $hash2) {
+            return [];
+        }
+
+        $return = [];
+
+        foreach ($array1 as $key => $value) {
+            // Guard clause: Key doesn't exist in array2 - include it and continue
+            if (!isset($array2[$key]) && !array_key_exists($key, $array2)) {
+                $return[$key] = $value;
+                continue;
+            }
+
+            $value2 = $array2[$key];
+
+            // Handle nested arrays with hash optimization
+            if (is_array($value) && is_array($value2)) {
+                $subHash1 = self::fastHash($value);
+                $subHash2 = self::fastHash($value2);
+
+                // Early continue: Hashes match - arrays are identical
+                if ($subHash1 === $subHash2) {
+                    continue;
+                }
+
+                // Different hashes - recurse to find differences
+                $aRecursiveDiff = self::arrayRecursiveDiff($value, $value2);
+                if ($aRecursiveDiff) {
+                    $return[$key] = $aRecursiveDiff;
+                }
+                continue;
+            }
+
+            // Scalar or mixed types - use strict comparison
+            if ($value !== $value2) {
+                $return[$key] = $value;
+            }
+        }
+
+        return $return;
+    }
+
+    /**
+     * Fast hash generation for arrays/values
+     * Uses xxHash (via hash()) if available, falls back to faster alternatives
+     *
+     * @param mixed $data
+     * @return string
+     */
+    private static function fastHash($data)
+    {
+        // For simple scalar values, return as-is (no hashing needed)
+        if (is_scalar($data)) {
+            return (string)$data;
+        }
+
+        // For arrays, use xxh3 (fastest), xxh64, or md5 as fallback
+        // xxh3 is ~10x faster than md5 for large data
+        static $hashAlgo = null;
+        if ($hashAlgo === null) {
+            if (in_array('xxh3', hash_algos())) {
+                $hashAlgo = 'xxh3';
+            } elseif (in_array('xxh64', hash_algos())) {
+                $hashAlgo = 'xxh64';
+            } else {
+                $hashAlgo = 'md5';
+            }
+        }
+
+        // Serialize and hash
+        // serialize() is faster than json_encode() for PHP arrays
+        return hash($hashAlgo, serialize($data));
+    }
+
+    /**
+     * Recursively filters an array, removing empty values
+     * 
+     * Traverses nested arrays and removes elements that evaluate to false.
+     * Note: Currently the $callback parameter is not used.
+     *
+     * @param array $array The array to filter
+     * @param callable|null $callback Optional callback function (currently unused)
+     * @return array The filtered array with empty values removed
+     */
+    static public function array_filter_recursive(array $array, $callback=null){
+        foreach($array as $k=>$v) {
+            if(is_array($v)) {
+                $array[$k] = static::array_filter_recursive($v, $callback);
+            }
+            if(!$v){
+                unset($array[$k]);
+            }
+        }
+        return $array;
     }
 }
