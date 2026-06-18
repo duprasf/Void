@@ -105,7 +105,8 @@ class ServerSpecs implements ArrayAccess
 
     public static function getOS() : array
     {
-        preg_match('("([^\(]*)")', `cat /etc/*-release | grep PRETTY_NAME`, $out);
+        preg_match('(NAME="([^"]*)")', shell_exec('cat /etc/*-release | grep NAME'), $out);
+
         return ['OS'=>trim($out[1])];
     }
 
