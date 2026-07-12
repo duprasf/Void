@@ -262,9 +262,10 @@ class ArrayFunction
      *
      * @param array $array1 The array to compare from
      * @param array $array2 The array to compare against
+     * @param array $ignoreKeys List of keys to ignore during comparison
      * @return array Elements from $array1 that differ from $array2
      */
-    static public function arrayRecursiveDiff($array1, $array2)
+    static public function arrayRecursiveDiff($array1, $array2, $ignoreKeys = [])
     {
         // Quick hash comparison - if arrays are identical, return empty immediately
         // For large arrays, this avoids deep traversal
@@ -278,6 +279,11 @@ class ArrayFunction
         $return = [];
 
         foreach ($array1 as $key => $value) {
+            // Skip keys that are in the ignore list
+            if (in_array($key, $ignoreKeys, true)) {
+                continue;
+            }
+
             // Guard clause: Key doesn't exist in array2 - include it and continue
             if (!isset($array2[$key]) && !array_key_exists($key, $array2)) {
                 $return[$key] = $value;
@@ -297,7 +303,7 @@ class ArrayFunction
                 }
 
                 // Different hashes - recurse to find differences
-                $aRecursiveDiff = self::arrayRecursiveDiff($value, $value2);
+                $aRecursiveDiff = self::arrayRecursiveDiff($value, $value2, $ignoreKeys);
                 if ($aRecursiveDiff) {
                     $return[$key] = $aRecursiveDiff;
                 }
